@@ -54,7 +54,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.MemoGarmentPu
             return (int)response.GetType().GetProperty("StatusCode").GetValue(response, null);
         }
 
-        private MemoGarmentPurchasingContoller GetController(IServiceProvider serviceProvider)
+        private MemoGarmentPurchasingController GetController(IServiceProvider serviceProvider)
         {
             var user = new Mock<ClaimsPrincipal>();
             var claims = new Claim[]
@@ -62,7 +62,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.MemoGarmentPu
                 new Claim("username", "unittestusername")
             };
             user.Setup(u => u.Claims).Returns(claims);
-            var controller = (MemoGarmentPurchasingContoller)Activator.CreateInstance(typeof(MemoGarmentPurchasingContoller), serviceProvider);
+            var controller = (MemoGarmentPurchasingController)Activator.CreateInstance(typeof(MemoGarmentPurchasingController), serviceProvider);
             controller.ControllerContext = new ControllerContext()
             {
                 HttpContext = new DefaultHttpContext()
@@ -531,6 +531,81 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.MemoGarmentPu
             var controller = GetController(serviceProviderMock.Object);
 
             var response = await controller.GetById(It.IsAny<int>());
+            var statusCode = GetStatusCode(response);
+
+            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
+        }
+
+        [Fact]
+        public async Task GetPdf_WithoutException_ReturnOk()
+        {
+            var serviceProviderMock = new Mock<IServiceProvider>();
+
+            var model = new MemoGarmentPurchasingModel();
+            model.MemoGarmentPurchasingDetails = new List<MemoGarmentPurchasingDetailModel>();
+            var serviceMock = new Mock<IMemoGarmentPurchasingService>();
+            serviceMock
+                .Setup(service => service.ReadByIdAsync(It.IsAny<int>()))
+                .ReturnsAsync(model);
+
+            serviceProviderMock
+                .Setup(serviceProvider => serviceProvider.GetService(typeof(IMemoGarmentPurchasingService))).Returns(serviceMock.Object);
+
+            var identityServiceMock = new Mock<IIdentityService>();
+            serviceProviderMock
+                .Setup(serviceProvider => serviceProvider.GetService(typeof(IIdentityService))).Returns(identityServiceMock.Object);
+
+            var controller = GetController(serviceProviderMock.Object);
+
+            var response = await controller.GetPdf(It.IsAny<int>());
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public async Task GetPdf_WithoutException_ReturnInternalServerError()
+        {
+            var serviceProviderMock = new Mock<IServiceProvider>();
+
+            var serviceMock = new Mock<IMemoGarmentPurchasingService>();
+            serviceMock
+                .Setup(service => service.ReadByIdAsync(It.IsAny<int>()))
+                .ReturnsAsync(new MemoGarmentPurchasingModel());
+
+            serviceProviderMock
+                .Setup(serviceProvider => serviceProvider.GetService(typeof(IMemoGarmentPurchasingService))).Returns(serviceMock.Object);
+
+            var identityServiceMock = new Mock<IIdentityService>();
+            serviceProviderMock
+                .Setup(serviceProvider => serviceProvider.GetService(typeof(IIdentityService))).Returns(identityServiceMock.Object);
+
+            var controller = GetController(serviceProviderMock.Object);
+
+            var response = await controller.GetPdf(It.IsAny<int>());
+            var statusCode = GetStatusCode(response);
+
+            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
+        }
+
+        [Fact]
+        public async Task GetPdf_WithoutException_ReturnNotFound()
+        {
+            var serviceProviderMock = new Mock<IServiceProvider>();
+
+            var serviceMock = new Mock<IMemoGarmentPurchasingService>();
+            serviceMock
+                .Setup(service => service.ReadByIdAsync(It.IsAny<int>()))
+                .Throws(new Exception());
+
+            serviceProviderMock
+                .Setup(serviceProvider => serviceProvider.GetService(typeof(IMemoGarmentPurchasingService))).Returns(serviceMock.Object);
+
+            var identityServiceMock = new Mock<IIdentityService>();
+            serviceProviderMock
+                .Setup(serviceProvider => serviceProvider.GetService(typeof(IIdentityService))).Returns(identityServiceMock.Object);
+
+            var controller = GetController(serviceProviderMock.Object);
+
+            var response = await controller.GetPdf(It.IsAny<int>());
             var statusCode = GetStatusCode(response);
 
             Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);

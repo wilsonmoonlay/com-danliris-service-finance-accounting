@@ -12,10 +12,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
         DetailRincian GetDetailById(int memoId);
         Task<int> CreateAsync(MemoDetailGarmentPurchasingModel model);
         ReadResponse<ListMemoDetail> Read(int page, int size, string order, List<string> select, string keyword, string filter);
-        ReadResponse<ReportRincian> GetReport(DateTimeOffset date, int page, int size, string order, List<string> select, string keyword, string filter);
+        ReadResponse<ReportRincian> GetReport(DateTimeOffset date, int page, int size, string order, List<string> select, string keyword, string filter, int valas);
         Task<int> UpdateAsync(int id, EditDetailRincian viewModel);
         Task<int> DeleteAsync(int id);
-        ReadResponse<ReportPDF> GetPDF(DateTimeOffset date, int page, int size, string order, List<string> select, string keyword, string filter);
+        ReadResponse<ReportPDF> GetPDF(DateTimeOffset date, int page, int size, string order, List<string> select, string keyword, string filter, int valas);
 
     }
 }

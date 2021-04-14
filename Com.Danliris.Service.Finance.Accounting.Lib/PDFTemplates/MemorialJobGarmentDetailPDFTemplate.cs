@@ -14,13 +14,14 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
         private static readonly Font _headerFont = FontFactory.GetFont(BaseFont.TIMES_BOLD, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 16);
         private static readonly Font _header2Font = FontFactory.GetFont(BaseFont.HELVETICA, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 16);
         private static readonly Font _header3Font = FontFactory.GetFont(BaseFont.HELVETICA, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 10);
+        private static readonly Font _header3BoldFont = FontFactory.GetFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 10);
         private static readonly Font _normalFont = FontFactory.GetFont(BaseFont.HELVETICA, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 9);
         private static readonly Font _smallFont = FontFactory.GetFont(BaseFont.HELVETICA, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 8);
         private static readonly Font _smallerFont = FontFactory.GetFont(BaseFont.HELVETICA, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 7);
         private static readonly Font _normalBoldFont = FontFactory.GetFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 9);
         private static readonly Font _smallBoldFont = FontFactory.GetFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 8);
         private static readonly Font _smallerBoldFont = FontFactory.GetFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1250, BaseFont.NOT_EMBEDDED, 7);
-
+        
         public static MemoryStream GeneratePdfTemplate(List<ReportPDF> data, String month, int year)
         {
             var document = new Document(PageSize.A4.Rotate(), 25, 25, 25, 25);
@@ -89,9 +90,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
 
         private static void SetContent(Document document, List<ReportPDF> data)
         {
-            float[] widths = new float[] { 3, 10, 10, 10, 17, 15, 7,  8, 8, 8 };
+            float[] widths = new float[] { 3, 10, 8, 10, 17, 7, 12, 9, 9, 9, 6 };
 
-            var table = new PdfPTable(10)
+            var table = new PdfPTable(11)
             {
                 WidthPercentage = 100
             };
@@ -124,6 +125,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
                 VerticalAlignment = Element.ALIGN_MIDDLE
             };
 
+            var cellColSpan8 = new PdfPCell()
+            {
+                HorizontalAlignment = Element.ALIGN_CENTER,
+                VerticalAlignment = Element.ALIGN_MIDDLE,
+                Colspan = 8
+            };
+
             cell.Phrase = new Phrase("No.", _header3Font);
             table.AddCell(cell);
 
@@ -139,7 +147,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
             cell.Phrase = new Phrase("No. Bon", _header3Font);
             table.AddCell(cell);
 
-            cell.Phrase = new Phrase("Keterangan", _header3Font);
+            cell.Phrase = new Phrase("Kode Supplier", _header3Font);
+            table.AddCell(cell);
+
+            cell.Phrase = new Phrase("Nama Supplier", _header3Font);
             table.AddCell(cell);
 
             cell.Phrase = new Phrase("Jml. Bayar (USD)", _header3Font);
@@ -155,6 +166,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
             table.AddCell(cell);
 
             var number = 1;
+            var totalJmlBayarIDR = 0;
+            var totalJmlBeli = 0;
+            var totalSelisih = 0;
+
             foreach (var item in data)
             {
                 cellItemRight.Phrase = new Phrase(number.ToString(), _header3Font);
@@ -174,10 +189,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
                 cellItemCenter.Phrase = new Phrase(item.BillsNo.ToString(), _header3Font);
                 table.AddCell(cellItemCenter);
 
-                cellItemLeft.Phrase = new Phrase(item.RemarksDetail, _header3Font);
+                cellItemLeft.Phrase = new Phrase(item.SupplierCode != null ? item.SupplierCode : "", _header3Font);
                 table.AddCell(cellItemLeft);
 
-                if(item.CurrencyCode != "IDR")
+                cellItemLeft.Phrase = new Phrase(item.SupplierName != null ? item.SupplierName: "", _header3Font);
+                table.AddCell(cellItemLeft);
+
+                if (item.CurrencyCode != "IDR")
                 {
                     cellItemRight.Phrase = new Phrase(item.MemoAmount.ToString("#,##0.#0"), _header3Font);
                     table.AddCell(cellItemRight);
@@ -205,7 +223,30 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
                     cellItemRight.Phrase = new Phrase(differencTotal.ToString("#,##0.#0"), _header3Font);
                     table.AddCell(cellItemRight);
                 }
-                
+
+                totalJmlBayarIDR += item.MemoIdrAmount;
+                totalJmlBeli += buyTotal;
+                totalSelisih += differencTotal;
+            }
+
+            cellColSpan8.Phrase = new Phrase("Total ", _header3BoldFont);
+            table.AddCell(cellColSpan8);
+
+            cellItemRight.Phrase = new Phrase(totalJmlBayarIDR.ToString("#,##0.#0"), _header3BoldFont);
+            table.AddCell(cellItemRight);
+
+            cellItemRight.Phrase = new Phrase(totalJmlBeli.ToString("#,##0.#0"), _header3BoldFont);
+            table.AddCell(cellItemRight);
+
+            if (totalSelisih == 0)
+            {
+                cellItemRight.Phrase = new Phrase("", _header3Font);
+                table.AddCell(cellItemRight);
+            }
+            else
+            {
+                cellItemRight.Phrase = new Phrase(totalSelisih.ToString("#,##0.#0"), _header3BoldFont);
+                table.AddCell(cellItemRight);
             }
 
             document.Add(table);

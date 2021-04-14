@@ -22,6 +22,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
         GarmentDebtBalanceSummaryAndTotalCurrencyDto GetDebtBalanceSummaryAndTotalCurrency(int supplierId, int month, int year, bool isForeignCurrency, bool supplierIsImport);
         List<GarmentDebtBalanceCardDto> GetDebtBalanceCardWithBeforeBalanceAndSaldoAkhirDto(int supplierId, int month, int year);
         GarmentDebtBalanceIndexDto GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex(int supplierId, int month, int year);
-        GarmentDebtBalanceIndexDto GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex(int page = 1, int size = 25, string order = "{}", List<string> select = null, string keyword = null, string filter = "{}");
+        GarmentDebtBalanceIndexDto GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex(string searchingType, int page = 1, int size = 25, string order = "{}", List<string> select = null, string keyword = null, string filter = "{}");
     }
 }

@@ -31,6 +31,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.MemoDet
                 .ForPath(d => d.PurchasingRate, opt => opt.MapFrom(s => s.PurchasingRate))
                 .ForPath(d => d.MemoAmount, opt => opt.MapFrom(s => s.MemoAmount))
                 .ForPath(d => d.MemoIdrAmount, opt => opt.MapFrom(s => s.MemoIdrAmount))
+                .ForPath(d => d.SupplierCode, opt => opt.MapFrom(s => s.SupplierCode))
+                .ForPath(d => d.SupplierName, opt => opt.MapFrom(s => s.SupplierName))
 
                 .ReverseMap();
         }

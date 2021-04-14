@@ -121,11 +121,11 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
         }
 
         [HttpGet("report")]
-        public IActionResult GetReport([FromQuery] DateTimeOffset date, int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
+        public IActionResult GetReport([FromQuery] DateTimeOffset date, int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}", int valas = -1)
         {
             try
             {
-                var queryResult = _service.GetReport(date, page, size, order, select, keyword, filter);
+                var queryResult = _service.GetReport(date, page, size, order, select, keyword, filter, valas);
 
                 var result =
                     new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE)
@@ -186,7 +186,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
         }
 
         [HttpGet("reports/downloads/pdf")]
-        public IActionResult GetPdf([FromQuery] DateTimeOffset date, int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
+        public IActionResult GetPdf([FromQuery] DateTimeOffset date, int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}", int valas = -1)
         {
             try
             {
@@ -195,7 +195,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
 
                 MemoryStream stream;
 
-                var queryResult = _service.GetPDF(date, page, size, order, select, keyword, filter);
+                var queryResult = _service.GetPDF(date, page, size, order, select, keyword, filter, valas);
 
                 var month = date.Month;
                 var year = date.Year;
@@ -268,11 +268,11 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
         }
 
         [HttpGet("reports/downloads/xls")]
-        public IActionResult GetXls([FromQuery] DateTimeOffset date, int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
+        public IActionResult GetXls([FromQuery] DateTimeOffset date, int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}", int valas = -1)
         {
             try
             {
-                var queryResult = _service.GetReport(date, page, size, order, select, keyword, filter);
+                var queryResult = _service.GetReport(date, page, size, order, select, keyword, filter, valas);
 
                 int month = date.Date.Month;
                 int year = date.Date.Year;

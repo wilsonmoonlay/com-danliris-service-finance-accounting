@@ -158,9 +158,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
             return result;
         }
 
-        public GarmentDebtBalanceIndexDto GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex(int page = 1, int size = 25, string order = "{}", List<string> select = null, string keyword = null, string filter = "{}")
+        public GarmentDebtBalanceIndexDto GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex(string searchingType, int page = 1, int size = 25, string order = "{}", List<string> select = null, string keyword = null, string filter = "{}")
         {
-            var query = GetDebtBalanceCardWithBeforeBalanceAndSaldoAkhirDto(page,size,order,select,keyword,filter);
+            var query = GetDebtBalanceCardWithBeforeBalanceAndSaldoAkhirDto(searchingType, page, size,order,select,keyword,filter);
             var data = query.Data.Select(s => new GarmentDebtBalanceCardDto(s)).ToList();
             var result = new GarmentDebtBalanceIndexDto
             {
@@ -172,19 +172,39 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
             return result;
         }
 
-        private ReadResponse<GarmentDebtBalanceModel> GetDebtBalanceCardWithBeforeBalanceAndSaldoAkhirDto(int page, int size, string order, List<string> select, string keyword, string filter)
+        private ReadResponse<GarmentDebtBalanceModel> GetDebtBalanceCardWithBeforeBalanceAndSaldoAkhirDto(string searchingType, int page, int size, string order, List<string> select, string keyword, string filter)
         {
             IQueryable<GarmentDebtBalanceModel> Query = _dbContext.GarmentDebtBalances;
-            List<string> searchAttributes = new List<string>()
-            {
-                "GarmentDeliveryOrderNo"
-            };
 
-            Query = QueryHelper<GarmentDebtBalanceModel>.Search(Query, searchAttributes, keyword);
-            var testDict = new Dictionary<string, object>() {
-                { "GarmentDeliveryOrderno","asc" },
-                { "SupplierName","desc"}
-            };
+            if (searchingType == "BillsNo")
+            {
+                List<string> searchAttributes = new List<string>()
+                {
+                    "BillsNo"
+                };
+
+                Query = QueryHelper<GarmentDebtBalanceModel>.Search(Query, searchAttributes, keyword);
+            }
+            else if (searchingType == "PaymentBills")
+            {
+                List<string> searchAttributes = new List<string>()
+                {
+                    "PaymentBills"
+                };
+
+                Query = QueryHelper<GarmentDebtBalanceModel>.Search(Query, searchAttributes, keyword);
+            }
+            else
+            {
+                
+                List<string> searchAttributes = new List<string>()
+                {
+                    "GarmentDeliveryOrderNo"
+                };
+
+                Query = QueryHelper<GarmentDebtBalanceModel>.Search(Query, searchAttributes, keyword);
+            }
+
             Dictionary<string, object> FilterDictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(filter);
             Query = QueryHelper<GarmentDebtBalanceModel>.Filter(Query, FilterDictionary);
 

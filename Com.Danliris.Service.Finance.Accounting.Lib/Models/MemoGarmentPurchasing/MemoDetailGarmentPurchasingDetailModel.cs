@@ -13,6 +13,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.MemoGarmentPurchasi
         public int MemoAmount { get; set; }
         public int MemoIdrAmount { get; set; }
         public int MemoDetailId { get; set; }
+        public string SupplierCode { get; set; }
+        public string SupplierName { get; set; }
 
         [ForeignKey("MemoDetailId")]
         public virtual MemoDetailGarmentPurchasingModel MemoDetailGarmentPurchasing { get; set; }

@@ -4,14 +4,16 @@ using Com.Danliris.Service.Finance.Accounting.Lib;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.Migrations
 {
     [DbContext(typeof(FinanceDbContext))]
-    partial class FinanceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210409022118_UpdateTableMemoGarmentPurchasings")]
+    partial class UpdateTableMemoGarmentPurchasings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -883,7 +885,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Migrations
                     b.Property<int>("InvoiceId");
 
                     b.Property<string>("InvoiceNo")
-                        .HasMaxLength(4000);
+                        .HasMaxLength(32);
 
                     b.Property<bool>("IsDeleted");
 
@@ -2510,10 +2512,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Migrations
                     b.Property<int>("PurchasingRate");
 
                     b.Property<string>("RemarksDetail");
-
-                    b.Property<string>("SupplierCode");
-
-                    b.Property<string>("SupplierName");
 
                     b.HasKey("Id");
 

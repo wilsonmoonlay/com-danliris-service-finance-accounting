@@ -132,7 +132,79 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.GarmentD
         {
             try
             {
-                GarmentDebtBalanceIndexDto data = Service.GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex(page, size, order, select, keyword, filter);
+                GarmentDebtBalanceIndexDto data = Service.GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex("GarmentDeliveryOrderNo", page, size, order, select, keyword, filter);
+
+                //List<GarmentInvoicePurchasingDispositionViewModel> dataVM = Mapper.Map<List<GarmentInvoicePurchasingDispositionViewModel>>(read.Data);
+
+                //Dictionary<string, object> Result =
+                //    new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE)
+                //    .Ok(Mapper, dataVM, page, size, read.Count, dataVM.Count, read.Order, read.Selected);
+                //return Ok(Result);
+                return Ok(new
+                {
+                    apiVersion = ApiVersion,
+                    data = data.Data,
+                    info = new
+                    {
+                        data.Count,
+                        data.Order,
+                        data.Selected
+                    },
+                    message = General.OK_MESSAGE,
+                    statusCode = General.OK_STATUS_CODE
+                });
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("loader-bills-no")]
+        public IActionResult GetLoaderByBillsNo(int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                GarmentDebtBalanceIndexDto data = Service.GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex("BillsNo", page, size, order, select, keyword, filter);
+
+                //List<GarmentInvoicePurchasingDispositionViewModel> dataVM = Mapper.Map<List<GarmentInvoicePurchasingDispositionViewModel>>(read.Data);
+
+                //Dictionary<string, object> Result =
+                //    new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE)
+                //    .Ok(Mapper, dataVM, page, size, read.Count, dataVM.Count, read.Order, read.Selected);
+                //return Ok(Result);
+                return Ok(new
+                {
+                    apiVersion = ApiVersion,
+                    data = data.Data,
+                    info = new
+                    {
+                        data.Count,
+                        data.Order,
+                        data.Selected
+                    },
+                    message = General.OK_MESSAGE,
+                    statusCode = General.OK_STATUS_CODE
+                });
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("loader-payment-bills")]
+        public IActionResult GetLoaderByPaymentBills(int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                GarmentDebtBalanceIndexDto data = Service.GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex("PaymentBills", page, size, order, select, keyword, filter);
 
                 //List<GarmentInvoicePurchasingDispositionViewModel> dataVM = Mapper.Map<List<GarmentInvoicePurchasingDispositionViewModel>>(read.Data);
 

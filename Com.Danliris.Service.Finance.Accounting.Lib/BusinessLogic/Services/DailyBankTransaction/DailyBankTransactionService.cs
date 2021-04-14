@@ -435,7 +435,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
         {
             //DateTimeOffset DateFrom = dateFrom == null ? dateTo == null ? DateTimeOffset.Now.AddDays(-30) : dateTo.Value.AddHours(clientTimeZoneOffset * -1).AddDays(-30) : dateFrom.Value.AddHours(clientTimeZoneOffset * -1);
             //DateTimeOffset DateTo = dateTo == null ? dateFrom == null ? DateTimeOffset.Now : dateFrom.Value.AddHours(clientTimeZoneOffset * -1).AddDays(DateTimeOffset.Now.Subtract(dateFrom.Value.AddHours(clientTimeZoneOffset * -1)).TotalDays) : dateTo.Value.AddHours(clientTimeZoneOffset * -1);
-            TimeSpan offset = new TimeSpan(clientTimeZoneOffset, 0, 0);
+            TimeSpan offset = new TimeSpan(clientTimeZoneOffset, 0 , 0);
 
             var Query = (from transaction in _DbContext.DailyBankTransactions
                          where
@@ -443,7 +443,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
                          && transaction.AccountBankId == bankId
                          //&& transaction.Date.Month == month
                          && transaction.Date.ToOffset(offset).Month == month
-                         && transaction.Date.Year == year                         
+                         && transaction.Date.Year == year
                          orderby transaction.Date, transaction.CreatedUtc
                          select new DailyBankTransactionModel
                          {

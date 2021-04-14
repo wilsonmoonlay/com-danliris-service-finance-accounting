@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Com.Moonlay.NetCore.Lib;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.MemoGarmentPurchasing;
+using System.Globalization;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.MemoGarmentPurchasing
 {
@@ -32,6 +34,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
             try
             {
                 model.MemoNo = GetMemoNo(model);
+                model.TotalAmount = GetTotalAmount(model.MemoGarmentPurchasingDetails);
+
                 EntityExtension.FlagForCreate(model, _identityService.Username, UserAgent);
 
                 foreach (var detail in model.MemoGarmentPurchasingDetails)
@@ -140,9 +144,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
                 _context.Update(modelToUpdate);
 
                 var modelIds = model.MemoGarmentPurchasingDetails.Select(x => x.Id).ToList();
-                var detailToUpdate = modelToUpdate.MemoGarmentPurchasingDetails.Select(x => {
+                var detailToUpdate = modelToUpdate.MemoGarmentPurchasingDetails.Select(x =>
+                {
                     var dat = model.MemoGarmentPurchasingDetails.Where(y => y.Id.Equals(x.Id)).FirstOrDefault();
-                    if(dat != null)
+                    if (dat != null)
                     {
                         x.COAId = dat.COAId;
                         x.COAName = dat.COAName;
@@ -152,7 +157,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
                         EntityExtension.FlagForUpdate(x, _identityService.Username, UserAgent);
                         return x;
                     }
-                    
+
                     EntityExtension.FlagForDelete(x, _identityService.Username, UserAgent);
                     return x;
                 });
@@ -160,7 +165,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
 
                 if (model.MemoGarmentPurchasingDetails.Any(x => x.Id < 1))
                 {
-                    var detailToCreate = model.MemoGarmentPurchasingDetails.Where(x => x.Id < 1).Select(x => {
+                    var detailToCreate = model.MemoGarmentPurchasingDetails.Where(x => x.Id < 1).Select(x =>
+                    {
                         x.MemoId = modelToUpdate.Id;
                         EntityExtension.FlagForCreate(x, _identityService.Username, UserAgent);
                         return x;
@@ -187,6 +193,17 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
             var generatedNo = $"{date.ToString("MM")}{date.ToString("yy")}.MG.{count.ToString("0000")}";
 
             return generatedNo;
+        }
+
+        private int GetTotalAmount(ICollection<MemoGarmentPurchasingDetailModel> model)
+        {
+            var total = 0;
+            foreach(var detail in model)
+            {
+                total += detail.DebitNominal;
+            }
+
+            return total;
         }
     }
 }

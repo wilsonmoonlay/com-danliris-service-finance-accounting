@@ -105,7 +105,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
             }
         }
 
-        public ReadResponse<ReportRincian> GetReport(DateTimeOffset date, int page, int size, string order, List<string> select, string keyword, string filter)
+        public ReadResponse<ReportRincian> GetReport(DateTimeOffset date, int page, int size, string order, List<string> select, string keyword, string filter, int valas)
         {
             try
             {
@@ -147,6 +147,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
                                memoDetailsGarmentsDetail.PurchasingRate,
                                memoDetailsGarmentsDetail.MemoAmount,
                                memoDetailsGarmentsDetail.MemoIdrAmount,
+                               memoDetailsGarmentsDetail.SupplierCode,
+                               memoDetailsGarmentsDetail.SupplierName
                            };
 
                 var reports = from memoDetailDetail in memoDetailDetails
@@ -169,7 +171,21 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
                                   AccountingBookType = memoDetailDetail.AccountingBookType,
                                   PaymentRate = memoDetailDetail.PaymentRate,
                                   PurchasingRate = memoDetailDetail.PurchasingRate,
+                                  SupplierCode = memoDetailDetail.SupplierCode,
+                                  SupplierName = memoDetailDetail.SupplierName
                               };
+
+                if(valas > -1)
+                {
+                    if(valas == 0)
+                    {
+                        reports = reports.Where(s => s.CurrencyCode == "IDR");
+                    }
+                    else
+                    {
+                        reports = reports.Where(s => s.CurrencyCode != "IDR");
+                    }
+                }
 
                 int totalData = pageable.TotalCount;
                 return new ReadResponse<ReportRincian>(reports.ToList(), totalData, orderDictionary, new List<string>());
@@ -333,7 +349,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
             return await _dbContext.SaveChangesAsync();
         }
 
-        public ReadResponse<ReportPDF> GetPDF(DateTimeOffset date, int page, int size, string order, List<string> select, string keyword, string filter)
+        public ReadResponse<ReportPDF> GetPDF(DateTimeOffset date, int page, int size, string order, List<string> select, string keyword, string filter, int valas)
         {
             try
             {
@@ -375,7 +391,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
                                             memoDetailsGarmentsDetail.PaymentRate,
                                             memoDetailsGarmentsDetail.PurchasingRate,
                                             memoDetailsGarmentsDetail.MemoAmount,
-                                            memoDetailsGarmentsDetail.MemoIdrAmount
+                                            memoDetailsGarmentsDetail.MemoIdrAmount,
+                                            memoDetailsGarmentsDetail.SupplierCode,
+                                            memoDetailsGarmentsDetail.SupplierName,
                                         };
 
                 var reports = from memoDetailDetail in memoDetailDetails
@@ -397,7 +415,21 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
                                   MemoIdrAmount = memoDetailDetail.MemoIdrAmount,
                                   AccountingBookType = memoDetailDetail.AccountingBookType,
                                   PurchasingRate = memoDetailDetail.PurchasingRate,
+                                  SupplierCode = memoDetailDetail.SupplierCode,
+                                  SupplierName = memoDetailDetail.SupplierName
                               };
+
+                if (valas > -1)
+                {
+                    if (valas == 0)
+                    {
+                        reports = reports.Where(s => s.CurrencyCode == "IDR");
+                    }
+                    else
+                    {
+                        reports = reports.Where(s => s.CurrencyCode != "IDR");
+                    }
+                }
 
                 int totalData = pageable.TotalCount;
                 return new ReadResponse<ReportPDF>(reports.ToList(), totalData, orderDictionary, new List<string>());
