@@ -1,5 +1,6 @@
 ﻿using Com.Danliris.Service.Finance.Accounting.Lib.Models.DPPVATBankExpenditureNote;
 using System;
+using System.Collections.Generic;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.DPPVATBankExpenditureNote
 {
@@ -35,6 +36,69 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.DPPVATBankEx
             DeliveryOrdersNo = detail.DeliveryOrdersNo;
             AmountDetail = detail.Amount;
         }
+        public ReportDto(DPPVATBankExpenditureNoteDetailModel detail, DPPVATBankExpenditureNoteItemModel itemDetail, DPPVATBankExpenditureNoteModel documentItem,DPPVATBankExpenditureNoteDetailDoModel detailDo)
+        {
+            ExpenditureId = documentItem.Id;
+            ExpenditureNoteNo = documentItem.DocumentNo;
+            ExpenditureDate = documentItem.Date;
+            CategoryName = detail.CategoryName;
+            PaymentMethod = detail.PaymentMethod;
+            DPP = itemDetail.DPP;
+            VAT = itemDetail.VATAmount;
+            Amount = documentItem.Amount;
+            CurrencyCode = documentItem.CurrencyCode;
+            CurrencyRate = documentItem.CurrencyRate;
+            BankName = documentItem.BankName;
+            SupplierId = itemDetail.SupplierId;
+            SupplierName = itemDetail.SupplierName;
+            InternalNoteId = itemDetail.InternalNoteId;
+            InternalNoteNo = itemDetail.InternalNoteNo;
+            InternalNoteAmount = itemDetail.TotalAmount;
+            OutstandingAmount = itemDetail.OutstandingAmount;
+            InvoiceId = detail.InvoiceId;
+            InvoiceNo = detail.InvoiceNo;
+            InvoiceAmount = detail.Amount;
+            PaidAmount = itemDetail.TotalAmount;
+            Difference = InternalNoteAmount - PaidAmount;
+            BillsNo = detailDo.BillNo;
+            PaymentBills = detailDo.PaymentBill;
+            SupplierCode = itemDetail.SupplierCode;
+            DeliveryOrdersNo = detailDo.DONo;
+            AmountDetail = detailDo.TotalAmount;
+            DPPVATDetailId = detail.Id;
+        }
+
+        public ReportDto(DPPVATBankExpenditureNoteDetailModel detail, DPPVATBankExpenditureNoteItemModel itemDetail, DPPVATBankExpenditureNoteModel documentItem, List<ReportDoDetailDto> detailSj)
+        {
+            ExpenditureId = documentItem.Id;
+            ExpenditureNoteNo = documentItem.DocumentNo;
+            ExpenditureDate = documentItem.Date;
+            CategoryName = detail.CategoryName;
+            PaymentMethod = detail.PaymentMethod;
+            DPP = itemDetail.DPP;
+            VAT = itemDetail.VATAmount;
+            Amount = documentItem.Amount;
+            CurrencyCode = documentItem.CurrencyCode;
+            CurrencyRate = documentItem.CurrencyRate;
+            BankName = documentItem.BankName;
+            SupplierId = itemDetail.SupplierId;
+            SupplierName = itemDetail.SupplierName;
+            InternalNoteId = itemDetail.InternalNoteId;
+            InternalNoteNo = itemDetail.InternalNoteNo;
+            InternalNoteAmount = itemDetail.TotalAmount;
+            OutstandingAmount = itemDetail.OutstandingAmount;
+            InvoiceId = detail.InvoiceId;
+            InvoiceNo = detail.InvoiceNo;
+            InvoiceAmount = detail.Amount;
+            PaidAmount = itemDetail.TotalAmount;
+            Difference = InternalNoteAmount - PaidAmount;
+            BillsNo = detail.BillsNo;
+            PaymentBills = detail.PaymentBills;
+            SupplierCode = itemDetail.SupplierCode;
+            DeliveryOrdersNo = detail.DeliveryOrdersNo;
+            AmountDetail = detail.Amount;
+            DetailDO = detailSj;
+        }
 
         public int ExpenditureId { get; private set; }
         public string ExpenditureNoteNo { get; private set; }
@@ -63,5 +127,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.DPPVATBankEx
         public string DeliveryOrdersNo { get; private set; }
         public object SupplierCode { get; private set; }
         public double AmountDetail { get; private set; }
+        public int DPPVATDetailId { get; set; }
+        public List<ReportDoDetailDto> DetailDO { get; private set; }
     }
 }

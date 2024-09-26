@@ -55,6 +55,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
             VerifiedBy = entity.Position == GarmentPurchasingExpeditionPosition.SendToAccounting ? entity.SendToAccountingBy : entity.Position == GarmentPurchasingExpeditionPosition.SendToCashier ? entity.SendToCashierBy : entity.Position == GarmentPurchasingExpeditionPosition.SendToPurchasing ? entity.SendToPurchasingBy : entity.VerificationAcceptedBy;
             SentDate = entity.Position == GarmentPurchasingExpeditionPosition.SendToAccounting || entity.Position == GarmentPurchasingExpeditionPosition.AccountingAccepted ? entity.SendToAccountingDate : entity.Position == GarmentPurchasingExpeditionPosition.SendToCashier || entity.Position == GarmentPurchasingExpeditionPosition.CashierAccepted ? entity.SendToCashierDate : entity.Position == GarmentPurchasingExpeditionPosition.SendToPurchasing ? entity.SendToPurchasingDate : entity.SendToVerificationDate;
             AcceptedDate = entity.Position == GarmentPurchasingExpeditionPosition.AccountingAccepted ? entity.AccountingAcceptedDate : entity.Position == GarmentPurchasingExpeditionPosition.CashierAccepted ? entity.CashierAcceptedDate : entity.Position == GarmentPurchasingExpeditionPosition.VerificationAccepted ? entity.VerificationAcceptedDate : null;
+            PaymentType = entity.PaymentType;
         }
 
         public int Id { get; private set; }
@@ -77,5 +78,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
         public string VerifiedBy { get; private set; }
         public DateTimeOffset? SentDate { get; private set; }
         public DateTimeOffset? AcceptedDate { get; private set; }
+        public string PaymentType { get; private set; }
     }
 }

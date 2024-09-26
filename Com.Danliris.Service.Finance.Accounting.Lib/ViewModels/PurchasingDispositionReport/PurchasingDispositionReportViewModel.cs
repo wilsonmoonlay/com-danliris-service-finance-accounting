@@ -53,5 +53,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.PurchasingDispo
         public double CurrencyRate { get; set; }
         public string DONo { get; set; }
         public string UrnNo { get; set; }
+        public double DifferenceNominal { get; set; }
+        public double PaymentCorrection { get; internal set; }
+        public double SupplierPayment { get; internal set; }
     }
 }

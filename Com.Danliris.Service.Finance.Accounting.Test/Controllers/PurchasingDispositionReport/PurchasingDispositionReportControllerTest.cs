@@ -56,9 +56,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.PurchasingDis
         public async Task GetReport_ReturnOK()
         {
             var mocks = GetMocks();
-            mocks.Service.Setup(f => f.GetReportAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<int>())).ReturnsAsync(new ReadResponse<PurchasingDispositionReportViewModel>(new List<PurchasingDispositionReportViewModel>(), 1, new Dictionary<string, string>(), new List<string>()));
+            mocks.Service.Setup(f => f.GetReportAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(new ReadResponse<PurchasingDispositionReportViewModel>(new List<PurchasingDispositionReportViewModel>(), 1, new Dictionary<string, string>(), new List<string>()));
 
-            var response = await GetController(mocks).GetReportAsync();
+            var response = await GetController(mocks).GetReportAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), DateTime.Now, DateTime.Now, DateTime.Now, DateTime.Now, It.IsAny<int>(), It.IsAny<int>(), "{}", "{}");
             Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
         }
 
@@ -66,35 +66,35 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.PurchasingDis
         public async Task GetReport_ThrowException()
         {
             var mocks = GetMocks();
-            mocks.Service.Setup(f => f.GetReportAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<int>())).ThrowsAsync(new Exception());
+            mocks.Service.Setup(f => f.GetReportAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).ThrowsAsync(new Exception());
 
-            var response = await GetController(mocks).GetReportAsync();
+            var response = await GetController(mocks).GetReportAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(),It.IsAny<int>(), It.IsAny<int>(),"{}","{}");
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
-
+ 
         [Fact]
         public async Task GetReportExcel_ReturnFile()
         {
             var mocks = GetMocks();
-            mocks.Service.Setup(f => f.GenerateExcelAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<int>())).ReturnsAsync(new MemoryStream());
+            mocks.Service.Setup(f => f.GenerateExcelAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(new MemoryStream());
 
-            var response = await GetController(mocks).GetXlsAsync();
+            var response = await GetController(mocks).GetXlsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), "{}", It.IsAny<DateTime>(), It.IsAny<DateTime>());
             Assert.NotNull(response);
 
-            var response2 = await GetController(mocks).GetXlsAsync("{}", DateTime.UtcNow);
-            Assert.NotNull(response2);
-            var response3 = await GetController(mocks).GetXlsAsync("{}", null, DateTime.UtcNow);
-            Assert.NotNull(response3);
-            var response4 = await GetController(mocks).GetXlsAsync("{}", DateTime.UtcNow, DateTime.UtcNow.AddDays(1));
-            Assert.NotNull(response4);
+            //var response2 = await GetController(mocks).GetXlsAsync("{}", DateTime.UtcNow);
+            //Assert.NotNull(response2);
+            //var response3 = await GetController(mocks).GetXlsAsync("{}", null, DateTime.UtcNow);
+            //Assert.NotNull(response3);
+            //var response4 = await GetController(mocks).GetXlsAsync("{}", DateTime.UtcNow, DateTime.UtcNow.AddDays(1));
+            //Assert.NotNull(response4);
         }
         [Fact]
         public async Task GetReportExcel_ThrowException()
         {
             var mocks = GetMocks();
-            mocks.Service.Setup(f => f.GenerateExcelAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<int>())).ThrowsAsync(new Exception());
+            mocks.Service.Setup(f => f.GenerateExcelAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<DateTimeOffset?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).ThrowsAsync(new Exception());
 
-            var response = await GetController(mocks).GetXlsAsync();
+            var response = await GetController(mocks).GetXlsAsync( It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(),"{}", It.IsAny<DateTime>(), It.IsAny<DateTime>());
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
     }

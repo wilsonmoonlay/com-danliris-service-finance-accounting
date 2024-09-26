@@ -10,5 +10,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
         public string DocumentNo { get; set; }
         public List<long> EPOIds { get; set; }
         public List<UPOAndAmountDto> UPOIds { get; set; }
+        public string ReferenceNo { get; internal set; }
     }
 }

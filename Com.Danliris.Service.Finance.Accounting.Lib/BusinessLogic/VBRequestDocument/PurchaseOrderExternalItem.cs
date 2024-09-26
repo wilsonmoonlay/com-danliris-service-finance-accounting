@@ -11,6 +11,7 @@
         public double? Price { get; set; }
         public bool UseVat { get; set; }
         public IncomeTaxDto IncomeTax { get; set; }
+        public VatTaxDto VatTax{ get; set; }
         public string IncomeTaxBy { get; set; }
         public UnitDto Unit { get; set; }
         public bool UseIncomeTax { get; set; }

@@ -160,12 +160,23 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
                 cell.Phrase = new Phrase(item.AccountBankCurrencyCode, _smallerFont);
                 table.AddCell(cell);
 
-                cellAlignRight.Phrase = new Phrase(item.Status.ToUpper().Equals("IN") ? item.Nominal.ToString("#,##0.#0") : 0.ToString("#,##0.#0"), _smallerFont);
-                table.AddCell(cellAlignRight);
+                if (item.AccountBankCurrencyCode != "IDR")
+                {
+                    cellAlignRight.Phrase = new Phrase(item.Status.ToUpper().Equals("IN") ? item.NominalValas.ToString("#,##0.#0") : 0.ToString("#,##0.#0"), _smallerFont);
+                    table.AddCell(cellAlignRight);
 
-                cellAlignRight.Phrase = new Phrase(item.Status.ToUpper().Equals("OUT") ? item.Nominal.ToString("#,##0.#0") : 0.ToString("#,##0.#0"), _smallerFont);
-                table.AddCell(cellAlignRight);
+                    cellAlignRight.Phrase = new Phrase(item.Status.ToUpper().Equals("OUT") ? item.NominalValas.ToString("#,##0.#0") : 0.ToString("#,##0.#0"), _smallerFont);
+                    table.AddCell(cellAlignRight);
+                }
+                else
+                {
+                    cellAlignRight.Phrase = new Phrase(item.Status.ToUpper().Equals("IN") ? item.Nominal.ToString("#,##0.#0") : 0.ToString("#,##0.#0"), _smallerFont);
+                    table.AddCell(cellAlignRight);
 
+                    cellAlignRight.Phrase = new Phrase(item.Status.ToUpper().Equals("OUT") ? item.Nominal.ToString("#,##0.#0") : 0.ToString("#,##0.#0"), _smallerFont);
+                    table.AddCell(cellAlignRight);
+                }
+                
                 cellAlignRight.Phrase = new Phrase(afterBalance.ToString("#,##0.#0"), _smallerFont);
                 table.AddCell(cellAlignRight);
             }

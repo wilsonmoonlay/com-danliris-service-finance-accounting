@@ -30,6 +30,24 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.DPPVATBankExpenditu
             BillsNo = billsNo;
         }
 
+        public DPPVATBankExpenditureNoteDetailModel(int dppVATBankExpenditureNoteId, int dppVATBankExpenditureNoteItemId, int invoiceId, string invoiceNo, DateTimeOffset invoiceDate, string productNames, int categoryId, string categoryName, double amount, string paymentMethod, string deliveryOrdersNo, string paymentBills, string billsNo, string detailSjJson)
+        {
+            DPPVATBankExpenditureNoteId = dppVATBankExpenditureNoteId;
+            DPPVATBankExpenditureNoteItemId = dppVATBankExpenditureNoteItemId;
+            InvoiceId = invoiceId;
+            InvoiceNo = invoiceNo;
+            InvoiceDate = invoiceDate;
+            ProductNames = productNames;
+            CategoryId = categoryId;
+            CategoryName = categoryName;
+            Amount = amount;
+            PaymentMethod = paymentMethod;
+            DeliveryOrdersNo = deliveryOrdersNo;
+            PaymentBills = paymentBills;
+            BillsNo = billsNo;
+            DetailSJ = detailSjJson;
+        }
+
         public int DPPVATBankExpenditureNoteId { get; private set; }
         public int DPPVATBankExpenditureNoteItemId { get; private set; }
         public int InvoiceId { get; private set; }
@@ -46,6 +64,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.DPPVATBankExpenditu
         public string DeliveryOrdersNo { get; internal set; }
         public string PaymentBills { get; private set; }
         public string BillsNo { get; private set; }
+        public string DetailSJ { get; private set; }
+        public virtual List<DPPVATBankExpenditureNoteDetailDoModel> DPPVATBankExpenditureNoteDetailDos { get; set; }
         //public string 
     }
 }

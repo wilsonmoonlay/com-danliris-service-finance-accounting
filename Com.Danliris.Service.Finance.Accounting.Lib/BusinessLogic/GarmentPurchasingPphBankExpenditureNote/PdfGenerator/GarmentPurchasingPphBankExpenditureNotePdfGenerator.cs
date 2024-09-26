@@ -164,7 +164,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
                     bodyTable.AddCell(bodyCell);
 
                     bodyCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                    bodyCell.Phrase = new Phrase(string.Join(',',item.Items.SelectMany(s=>s.Details).Select(s=> s.UnitCode)), normal_font);
+                    bodyCell.Phrase = new Phrase(string.Join(',',item.Items.SelectMany(s=>s.Details).Select(s=> s.UnitCode).Distinct()), normal_font);
                     bodyTable.AddCell(bodyCell);
 
                     bodyCell.Phrase = new Phrase(item.CurrencyCode, normal_font);

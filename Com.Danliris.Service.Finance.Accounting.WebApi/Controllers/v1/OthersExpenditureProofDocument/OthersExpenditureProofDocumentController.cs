@@ -12,6 +12,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.OthersExpenditureProofDocument.ExcelGenerator;
 
 namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.OthersExpenditureProofDocument
 {
@@ -60,6 +61,39 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.OthersEx
                         page = result.Page,
                         size = result.Size,
                         order = order
+                    },
+                    message = General.OK_MESSAGE,
+                    statusCode = General.OK_STATUS_CODE
+                });
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(_apiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("loader")]
+        public async Task<IActionResult> GetLoader(string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                VerifyUser();
+
+                var result = await _service.GetLoaderAsync(keyword, filter);
+
+                return Ok(new
+                {
+                    apiVersion = _apiVersion,
+                    data = result.Data,
+                    info = new
+                    {
+                        total = result.Total,
+                        count = result.Count,
+                        page = result.Page,
+                        size = result.Size
                     },
                     message = General.OK_MESSAGE,
                     statusCode = General.OK_STATUS_CODE
@@ -237,7 +271,73 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.OthersEx
                 VerifyUser();
                 var result = await _service.Posting(ids);
 
-                return NoContent();
+                return Ok(new
+                {
+                    apiVersion = _apiVersion,
+                    data = result,
+                    message = General.OK_MESSAGE,
+                    statusCode = General.CREATED_STATUS_CODE
+                });
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(_apiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("report")]
+        public async Task<IActionResult> GetReport(DateTimeOffset? startDate, DateTimeOffset? endDate, DateTimeOffset? dateExpenditure, string bankExpenditureNo, string division, int page = 1, int size = 25, string order = "{}", string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                VerifyUser();
+
+                var result = await _service.GetReportList(startDate,endDate,dateExpenditure,bankExpenditureNo,division, page, size, order, keyword, filter);
+
+                return Ok(new
+                {
+                    apiVersion = _apiVersion,
+                    data = result.Data,
+                    info = new
+                    {
+                        total = result.Total,
+                        count = result.Count,
+                        page = result.Page,
+                        size = result.Size,
+                        order = order
+                    },
+                    message = General.OK_MESSAGE,
+                    statusCode = General.OK_STATUS_CODE
+                });
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(_apiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("report/xls")]
+        public async Task<IActionResult> GetReportXls(DateTimeOffset? startDate, DateTimeOffset? endDate, DateTimeOffset? dateExpenditure, string bankExpenditureNo, string division,  int page = 1, int size = 25, string order = "{}", string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                VerifyUser();
+
+                var result = await _service.GetReportList(startDate, endDate, dateExpenditure, bankExpenditureNo, division, 1, int.MaxValue, order, keyword, filter);
+
+                var filename = "Laporan Bukti Pengeluaran Bank Lain - Lain";
+                var xls = OthersExpenditureProofDocumentExcelGenerator.Create(filename, result.Data, bankExpenditureNo, dateExpenditure.GetValueOrDefault(), division, startDate.GetValueOrDefault(), endDate.GetValueOrDefault(), _identityService.TimezoneOffset);
+
+                var xlsInBytes = xls.ToArray();
+
+                var file = File(xlsInBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
+                return file;
             }
             catch (Exception e)
             {

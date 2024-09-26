@@ -6,8 +6,22 @@ using System.Text;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentInvoicePurchasingDisposition
 {
-    public class GarmentInvoicePurchasingDispositionItemModel:StandardEntity
+    public class GarmentInvoicePurchasingDispositionItemModel : StandardEntity
     {
+
+        public GarmentInvoicePurchasingDispositionItemModel()
+        {
+
+        }
+
+        public GarmentInvoicePurchasingDispositionItemModel(double totalPaid, int expeditionId, string dispositionNo)
+        {
+            TotalPaid = totalPaid;
+            PurchasingDispositionExpeditionId = expeditionId;
+            DispositionNo = dispositionNo;
+        }
+
+
         public int DispositionId { get; private set; }
         public string DispositionNo { get; private set; }
         public DateTimeOffset DispositionDate { get; private set; }
@@ -25,9 +39,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentInvoicePurch
         public int CurrencyId { get; private set; }
         public string CurrencyCode { get; private set; }
         public double CurrencyRate { get; private set; }
-        public int GarmentInvoicePurchasingDisposistionId { get; set; }
+        public int GarmentInvoicePurchasingDispositionId { get; set; }
         public int PurchasingDispositionExpeditionId { get; private set; }
-        [ForeignKey("GarmentInvoicePurchasingDisposistionId")]
+        [ForeignKey("GarmentInvoicePurchasingDispositionId")]
         public virtual GarmentInvoicePurchasingDispositionModel GarmentInvoicePurchasingDisposition { get; set; }
         public void SetTotalPaid(double totalPaid)
         {

@@ -27,5 +27,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
 
         Task<int> ApprovalData(ApprovalVBFormDto data);
         Task<int> CancellationDocuments(CancellationFormDto form);
+        bool GetVBForPurchasing(int id);
     }
 }

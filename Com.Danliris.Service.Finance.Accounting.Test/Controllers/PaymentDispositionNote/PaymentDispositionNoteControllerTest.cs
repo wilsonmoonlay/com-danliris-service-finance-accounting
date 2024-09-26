@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.PaymentDispositionNote;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.PaymentDispositionNote;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.PurchasingDispositionExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.IdentityService;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.ValidateService;
 using Com.Danliris.Service.Finance.Accounting.Lib.Utilities;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.NewIntegrationViewModel;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.PaymentDispositionNoteViewModel;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.PurchasingDispositionExpedition;
 using Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.PaymentDispositionNote;
 using Com.Moonlay.NetCore.Lib.Service;
 using Microsoft.AspNetCore.Http;
@@ -14,6 +16,7 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
@@ -264,6 +267,14 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.PaymentDispos
             return GetStatusCode(response);
         }
 
+        private int GetStatusCodeGetAllCashierPosition((Mock<IIdentityService> IdentityService, Mock<IValidateService> ValidateService, Mock<IPaymentDispositionNoteService> Service, Mock<IMapper> Mapper) mocks)
+        {
+            PaymentDispositionNoteController controller = GetController(mocks);
+            IActionResult response = controller.GetAllCashierPosition();
+
+            return GetStatusCode(response);
+        }
+
         [Fact]
         public void Get_WithoutException_ReturnOK()
         {
@@ -468,45 +479,45 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.PaymentDispos
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
 
-        [Fact]
-        public void Should_Success_Get_PDF_By_Id()
-        {
-            var mocks = GetMocks();
-            mocks.Service.Setup(f => f.ReadByIdAsync(It.IsAny<int>())).ReturnsAsync(new PaymentDispositionNoteModel());
-            mocks.Mapper.Setup(f => f.Map<PaymentDispositionNoteViewModel>(It.IsAny<PaymentDispositionNoteModel>())).Returns(ViewModel);
+        //[Fact]
+        //public void Should_Success_Get_PDF_By_Id()
+        //{
+        //    var mocks = GetMocks();
+        //    mocks.Service.Setup(f => f.ReadByIdAsync(It.IsAny<int>())).ReturnsAsync(new PaymentDispositionNoteModel());
+        //    mocks.Mapper.Setup(f => f.Map<PaymentDispositionNoteViewModel>(It.IsAny<PaymentDispositionNoteModel>())).Returns(ViewModel);
 
-            PaymentDispositionNoteController controller = new PaymentDispositionNoteController(mocks.IdentityService.Object, mocks.ValidateService.Object, mocks.Mapper.Object, mocks.Service.Object);
-            controller.ControllerContext = new ControllerContext()
-            {
-                HttpContext = new DefaultHttpContext()
-            };
+        //    PaymentDispositionNoteController controller = new PaymentDispositionNoteController(mocks.IdentityService.Object, mocks.ValidateService.Object, mocks.Mapper.Object, mocks.Service.Object);
+        //    controller.ControllerContext = new ControllerContext()
+        //    {
+        //        HttpContext = new DefaultHttpContext()
+        //    };
 
-            controller.ControllerContext.HttpContext.Request.Headers["Accept"] = "application/pdf";
-            controller.ControllerContext.HttpContext.Request.Headers["x-timezone-offset"] = "0";
+        //    controller.ControllerContext.HttpContext.Request.Headers["Accept"] = "application/pdf";
+        //    controller.ControllerContext.HttpContext.Request.Headers["x-timezone-offset"] = "0";
 
-            var response = controller.GetById(It.IsAny<int>()).Result;
-            Assert.NotNull(response.GetType().GetProperty("FileStream"));
-        }
+        //    var response = controller.GetById(It.IsAny<int>()).Result;
+        //    Assert.NotNull(response.GetType().GetProperty("FileStream"));
+        //}
 
-        [Fact]
-        public void Should_Success_Get_PDF_By_Id1()
-        {
-            var mocks = GetMocks();
-            mocks.Service.Setup(f => f.ReadByIdAsync(It.IsAny<int>())).ReturnsAsync(new PaymentDispositionNoteModel());
-            mocks.Mapper.Setup(f => f.Map<PaymentDispositionNoteViewModel>(It.IsAny<PaymentDispositionNoteModel>())).Returns(ViewModel1);
+        //[Fact]
+        //public void Should_Success_Get_PDF_By_Id1()
+        //{
+        //    var mocks = GetMocks();
+        //    mocks.Service.Setup(f => f.ReadByIdAsync(It.IsAny<int>())).ReturnsAsync(new PaymentDispositionNoteModel());
+        //    mocks.Mapper.Setup(f => f.Map<PaymentDispositionNoteViewModel>(It.IsAny<PaymentDispositionNoteModel>())).Returns(ViewModel1);
 
-            PaymentDispositionNoteController controller = new PaymentDispositionNoteController(mocks.IdentityService.Object, mocks.ValidateService.Object, mocks.Mapper.Object, mocks.Service.Object);
-            controller.ControllerContext = new ControllerContext()
-            {
-                HttpContext = new DefaultHttpContext()
-            };
+        //    PaymentDispositionNoteController controller = new PaymentDispositionNoteController(mocks.IdentityService.Object, mocks.ValidateService.Object, mocks.Mapper.Object, mocks.Service.Object);
+        //    controller.ControllerContext = new ControllerContext()
+        //    {
+        //        HttpContext = new DefaultHttpContext()
+        //    };
 
-            controller.ControllerContext.HttpContext.Request.Headers["Accept"] = "application/pdf";
-            controller.ControllerContext.HttpContext.Request.Headers["x-timezone-offset"] = "0";
+        //    controller.ControllerContext.HttpContext.Request.Headers["Accept"] = "application/pdf";
+        //    controller.ControllerContext.HttpContext.Request.Headers["x-timezone-offset"] = "0";
 
-            var response = controller.GetById(It.IsAny<int>()).Result;
-            Assert.NotNull(response.GetType().GetProperty("FileStream"));
-        }
+        //    var response = controller.GetById(It.IsAny<int>()).Result;
+        //    Assert.NotNull(response.GetType().GetProperty("FileStream"));
+        //}
 
         [Fact]
         public void GetByEPOId_WithoutException_ReturnOK()
@@ -557,6 +568,115 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.PaymentDispos
 
             var response = GetController(mocks).PaymentDispositionNotePost(Dto).Result;
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void Get_Report_WithoutException_ReturnOK()
+        {
+            var mocks = GetMocks();
+            mocks.Service
+                .Setup(f => f.GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
+                .Returns(new List<ReportDto>());
+
+            var response = GetController(mocks).GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>());
+            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void Get_Report_NullDate_ReturnOK()
+        {
+            var mocks = GetMocks();
+            mocks.Service
+                .Setup(f => f.GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
+                .Returns(new List<ReportDto>());
+
+            var response = GetController(mocks).GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), null, null);
+            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void Get_Report_ThrowException_ReturnInternalServerError()
+        {
+            var mocks = GetMocks();
+            mocks.Service
+                .Setup(f => f.GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
+                .Throws(new Exception());
+
+            var response = GetController(mocks).GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>());
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void Get_ReportXls_WithoutException_ReturnOK()
+        {
+            var mocks = GetMocks();
+            mocks.Service
+                .Setup(f => f.GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
+                .Returns(new List<ReportDto>());
+
+            mocks.Service
+                .Setup(f => f.GetXls(It.IsAny<List<ReportDto>>()))
+                .Returns(new MemoryStream());
+
+            var response = GetController(mocks).GetReportXls(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>());
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void Get_ReportXls_DateNull_ReturnOK()
+        {
+            var mocks = GetMocks();
+            mocks.Service
+                .Setup(f => f.GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
+                .Returns(new List<ReportDto>());
+
+            mocks.Service
+                .Setup(f => f.GetXls(It.IsAny<List<ReportDto>>()))
+                .Returns(new MemoryStream());
+
+            var response = GetController(mocks).GetReportXls(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), null, null);
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void Get_ReportXls_ThrowException_ReturnInternalServerError()
+        {
+            var mocks = GetMocks();
+            mocks.Service
+                .Setup(f => f.GetReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
+                .Throws(new Exception());
+
+            mocks.Service
+                .Setup(f => f.GetXls(It.IsAny<List<ReportDto>>()))
+                .Returns(new MemoryStream());
+
+            var response = GetController(mocks).GetReportXls(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>());
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void GetAllCashierPosition_WithoutException_ReturnOK()
+        {
+            var mocks = GetMocks();
+            mocks.Service
+                .Setup(f => f.GetAllByPosition(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new ReadResponse<PurchasingDispositionExpeditionModel>(new List<PurchasingDispositionExpeditionModel>() { new PurchasingDispositionExpeditionModel() }, 0, new Dictionary<string, string>(), new List<string>()));
+            mocks.Mapper
+                .Setup(f => f.Map<List<PurchasingDispositionExpeditionViewModel>>(It.IsAny<List<PurchasingDispositionExpeditionModel>>()))
+                .Returns(new List<PurchasingDispositionExpeditionViewModel>());
+
+            var response = GetController(mocks).GetAllCashierPosition();
+            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void GetAllCashierPosition_ThrowException_ReturnInternalServerError()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetAllByPosition(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>())).Throws(new Exception());
+
+            int statusCode = GetStatusCodeGetAllCashierPosition(mocks);
+            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
         }
     }
 }

@@ -47,6 +47,14 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentInvoiceP
         public double TotalPaidPaymentBefore { get; set; }
         public double DiffTotalPaidPayment { get; set; }
 
+        public double PrecisionDiffTotalPaidPayment
+        {
+            get
+            {
+                return (this.TotalPaidPaymentBefore + TotalPaidPayment)- TotalPaid;
+            }
+        }
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) 
         {
             if (this.TotalPaidPaymentBefore + this.TotalPaidPayment >= this.TotalPaid)

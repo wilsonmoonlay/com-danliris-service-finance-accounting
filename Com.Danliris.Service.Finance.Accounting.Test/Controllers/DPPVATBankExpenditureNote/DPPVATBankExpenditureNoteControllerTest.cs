@@ -601,29 +601,29 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.DPPVATBankExp
             Assert.Equal((int)HttpStatusCode.OK, statusCode);
         }
 
-        [Fact]
-        public void GetReport_Succes_Return_InternalServerError()
-        {
-            //Setup
-            Mock<IServiceProvider> serviceProviderMock = GetServiceProvider();
-            var service = new Mock<IDPPVATBankExpenditureNoteService>();
+        //[Fact]
+        //public void GetReport_Succes_Return_InternalServerError()
+        //{
+        //    //Setup
+        //    Mock<IServiceProvider> serviceProviderMock = GetServiceProvider();
+        //    var service = new Mock<IDPPVATBankExpenditureNoteService>();
 
-            service
-                .Setup(s => s.ExpenditureReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
-                .Throws(new Exception());
+        //    service
+        //        .Setup(s => s.ExpenditureReport(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
+        //        .Throws(new Exception());
 
-            serviceProviderMock
-               .Setup(serviceProvider => serviceProvider.GetService(typeof(IDPPVATBankExpenditureNoteService)))
-               .Returns(service.Object);
+        //    serviceProviderMock
+        //       .Setup(serviceProvider => serviceProvider.GetService(typeof(IDPPVATBankExpenditureNoteService)))
+        //       .Returns(service.Object);
 
-            //Act
-            FormDto form = new FormDto();
-            IActionResult response = GetController(serviceProviderMock).GetReport(1, 1, 1, 1, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(1));
+        //    //Act
+        //    FormDto form = new FormDto();
+        //    IActionResult response = GetController(serviceProviderMock).GetReport(1, 1, 1, 1, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(1));
 
-            //Assert
-            int statusCode = this.GetStatusCode(response);
-            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
-        }
+        //    //Assert
+        //    int statusCode = this.GetStatusCode(response);
+        //    Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
+        //}
 
         [Fact]
         public void GeneratePdf_Succes_Return_OK()

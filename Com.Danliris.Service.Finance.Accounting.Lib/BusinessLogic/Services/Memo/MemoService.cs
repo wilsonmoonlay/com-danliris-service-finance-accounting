@@ -61,7 +61,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
 
         private string GetMemoDocumentNo(MemoModel model)
         {
-            var now = DateTime.Now;
+            var now = model.Date;
             var year = now.ToString("yy");
             var month = now.ToString("MM");
 

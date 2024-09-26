@@ -28,6 +28,11 @@ using Com.Danliris.Service.Finance.Accounting.Test.Helpers;
 using Com.Danliris.Service.Finance.Accounting.Test.DataUtils.VBRealizationDocumentExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizationDocumentExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocumentExpedition;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.OthersExpenditureProofDocument;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocument;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.DailyBankTransaction;
+using System.Net.Http;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.PaymentDispositionNote;
 
 namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransaction
 {
@@ -181,7 +186,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransacti
             {
                 1
             };
-            var result = await service.AutoJournalVBNonPOClearence(vbRealizationIds, viewModel);
+            var result = await service.AutoJournalVBNonPOClearence(vbRealizationIds, viewModel, null);
             Assert.NotEqual(0, result);
 
 
@@ -220,6 +225,35 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransacti
             var expeditionService = new VBRealizationDocumentExpeditionService(dbContext, GetServiceProvider().Object);
             var model = _dataUtil(expeditionService, dbContext).GetTestData_VBRealizationDocumentExpedition();
 
+            var realization = new Lib.ViewModels.VBRealizationDocumentNonPO.VBRealizationDocumentNonPOViewModel()
+            {
+                IsInklaring = true,
+                Currency = new Lib.ViewModels.VBRealizationDocumentNonPO.CurrencyViewModel()
+                {
+                    Code = "IDR"
+                }
+            };
+
+            var expenditureitem = new Lib.ViewModels.VBRealizationDocumentNonPO.VBRealizationDocumentNonPOExpenditureItemViewModel()
+            {
+                PPhAmount = 1,
+                PPnAmount = 1,
+            };
+
+            var unitcostitem = new Lib.ViewModels.VBRealizationDocumentNonPO.VBRealizationDocumentNonPOUnitCostViewModel()
+            {
+                IsSelected = true
+            };
+
+            var vbRealizations = new VBRealizationDocumentModel(realization);
+            var vbRealizationItems = new VBRealizationDocumentExpenditureItemModel(2, expenditureitem);
+            var vbRealizationsUnitItems = new VBRealizationDocumentUnitCostsItemModel(2, unitcostitem);
+
+            dbContext.VBRealizationDocuments.Add(vbRealizations);
+            dbContext.VBRealizationDocumentExpenditureItems.Add(vbRealizationItems);
+            dbContext.VBRealizationDocumentUnitCostsItems.Add(vbRealizationsUnitItems);
+            dbContext.SaveChanges();
+
             var service = new AutoJournalService(dbContext, serviceProviderMock.Object);
 
             AccountBankViewModel viewModel = new AccountBankViewModel()
@@ -242,11 +276,12 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransacti
 
             List<int> vbRealizationIds = new List<int>()
             {
-                1
+                1,
+                2
             };
 
             //Act
-            var result = await service.AutoJournalVBNonPOClearence(vbRealizationIds, viewModel);
+            var result = await service.AutoJournalVBNonPOClearence(vbRealizationIds, viewModel, null);
             
             //Assert
             Assert.NotEqual(0, result);
@@ -346,11 +381,26 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransacti
             var vBRealizationWithPOService = new VBRealizationWithPOService(dbContext, serviceProviderMock.Object);
             var vBRealizationDocumenData = GetDataUtil(vBRealizationWithPOService).GetTestData_DenganNomorVB();
 
+            var realization = new Lib.ViewModels.VBRealizationDocumentNonPO.VBRealizationDocumentNonPOViewModel()
+            {
+                IsInklaring = true,
+                Currency = new Lib.ViewModels.VBRealizationDocumentNonPO.CurrencyViewModel()
+                {
+                    Code = "USD"
+                }
+            };
+
+            var vbRealizations = new VBRealizationDocumentModel(realization);
+
+            dbContext.VBRealizationDocuments.Add(vbRealizations);
+            dbContext.SaveChanges();
+
             var service = new AutoJournalService(dbContext, serviceProviderMock.Object);
 
             List<int> vbRealizationIds = new List<int>()
             {
-                1
+                1,
+                2
             };
 
             //Act
@@ -450,6 +500,377 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransacti
             //Assert
             Assert.NotEqual(0, result);
         }
+        [Fact]
+        public async Task Should_Success_AutoJournalFromOthersExpenditureProof_With_ViewModel()
+        {
+            //Setup
+            var dbContext = GetDbContext(GetCurrentMethod());
+            var serviceProviderMock = GetServiceProvider();
+
+            serviceProviderMock.Setup(s => s.GetService(typeof(FinanceDbContext))).Returns(dbContext);
+            serviceProviderMock
+                .Setup(x => x.GetService(typeof(IHttpClientService)))
+                .Returns(new JournalHttpClientTestService());
+
+            Mock<IJournalTransactionService> journalTransactionServiceMock = new Mock<IJournalTransactionService>();
+
+            journalTransactionServiceMock.Setup(s => s.CreateAsync(It.IsAny<JournalTransactionModel>())).ReturnsAsync(1);
+
+            serviceProviderMock
+                .Setup(x => x.GetService(typeof(IJournalTransactionService)))
+                .Returns(journalTransactionServiceMock.Object);
+
+            var masterCOAServiceMock = new MasterCOAService(serviceProviderMock.Object);
+            serviceProviderMock
+               .Setup(x => x.GetService(typeof(IMasterCOAService)))
+               .Returns(masterCOAServiceMock);
+
+            var service = new AutoJournalService(dbContext, serviceProviderMock.Object);
+
+            AccountBankViewModel viewModel = new AccountBankViewModel()
+            {
+                AccountCOA = "AccountCOA",
+                AccountName = "AccountName",
+                AccountNumber = "AccountNumber",
+                BankCode = "BankCode",
+                BankName = "BankName",
+                Code = "Code",
+                Currency = new CurrencyViewModel()
+                {
+                    Code = "Rp",
+                    Description = "Description",
+                    Rate = 1,
+                    Symbol = "IDR"
+                },
+
+            };
+
+            List<int> vbRealizationIds = new List<int>()
+            {
+                1
+            };
+
+            var viewModelOtherProof = new OthersExpenditureProofDocumentModel()
+            {
+                Date = DateTime.Now,
+                DocumentNo = "test",
+                AccountBankId = 1
+            };
+            var viewModelOtherProofItems = new List<OthersExpenditureProofDocumentItemModel>()
+            {
+                new OthersExpenditureProofDocumentItemModel
+                {
+                    COAId = 1,
+                    Debit= 10
+                }
+            };
+
+            //Act
+            var result = await service.AutoJournalFromOthersExpenditureProof(viewModelOtherProof, viewModelOtherProofItems);
+
+            //Assert
+            Assert.NotEqual(0, result);
+        }
+
+        [Fact]
+        public async Task Should_Success_AutoJournalFromDailyBankTransaction()
+        {
+            //Setup
+            var dbContext = GetDbContext(GetCurrentMethod());
+            var serviceProviderMock = GetServiceProvider();
+
+            serviceProviderMock.Setup(s => s.GetService(typeof(FinanceDbContext))).Returns(dbContext);
+            serviceProviderMock
+                .Setup(x => x.GetService(typeof(IHttpClientService)))
+                .Returns(new JournalHttpClientTestService());
+
+            Mock<IJournalTransactionService> journalTransactionServiceMock = new Mock<IJournalTransactionService>();
+
+            journalTransactionServiceMock.Setup(s => s.CreateAsync(It.IsAny<JournalTransactionModel>())).ReturnsAsync(1);
+
+            serviceProviderMock
+                .Setup(x => x.GetService(typeof(IJournalTransactionService)))
+                .Returns(journalTransactionServiceMock.Object);
+
+            var masterCOAServiceMock = new MasterCOAService(serviceProviderMock.Object);
+            serviceProviderMock
+               .Setup(x => x.GetService(typeof(IMasterCOAService)))
+               .Returns(masterCOAServiceMock);
+
+            var httpClientService = new Mock<IHttpClientService>();
+            HttpResponseMessage message = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+            message.Content = new StringContent("{\"data\":{\"Id\":7,\"Code\":\"BB\",\"Rate\":13700.0,\"Date\":\"2018/10/20\"}}");
+
+            httpClientService
+                .Setup(x => x.GetAsync(It.IsAny<string>()))
+                .ReturnsAsync(message);
+
+            serviceProviderMock
+                .Setup(x => x.GetService(typeof(IHttpClientService)))
+                .Returns(httpClientService.Object);
+            var service = new AutoJournalService(dbContext, serviceProviderMock.Object);
+
+            AccountBank acc1 = new AccountBank()
+            {
+                AccountCOA = "AccountCOA",
+                AccountName = "AccountName",
+                AccountNumber = "AccountNumber",
+                BankCode = "BankCode",
+                BankName = "BankName",
+                Currency= new Currency()
+                {
+                    Code = "Rp",
+                    Symbol = "IDR"
+                },
+            };
+            AccountBank acc2 = new AccountBank()
+            {
+                AccountCOA = "AccountCOA",
+                AccountName = "AccountName",
+                AccountNumber = "AccountNumber",
+                BankCode = "BankCode",
+                BankName = "BankName",
+                Currency = new Currency()
+                {
+                    Code = "dolar",
+                    Symbol = "USD"
+                },
+            };
+
+            DailyBankTransactionModel dailyModel = new DailyBankTransactionModel()
+            {
+                AccountBankAccountName = "AccountName",
+                AccountBankAccountNumber = "AccountNumber",
+                AccountBankCode = "BankCode",
+                AccountBankCurrencyCode = "CurrencyCode",
+                AccountBankCurrencyId = 1,
+                AccountBankCurrencySymbol = "CurrencySymbol",
+                AccountBankId = 1,
+                AccountBankName = "BankName",
+                AfterNominal = 0,
+                BeforeNominal = 0,
+                BuyerCode = "BuyerCode",
+                BuyerId = 1,
+                BuyerName = "BuyerName",
+                Date = DateTimeOffset.UtcNow,
+                Nominal = 1000,
+                ReferenceNo = "",
+                ReferenceType = "ReferenceType",
+                Remark = "Remark",
+                SourceType = "Pendanaan",
+                SourceFundingType = "Internal",
+                Status = "IN",
+                SupplierCode = "SupplierCode",
+                SupplierName = "SupplierName",
+                SupplierId = 1,
+                DestinationBankAccountName = "AccountName",
+                DestinationBankAccountNumber = "AccountNumber",
+                DestinationBankCode = "BankCode",
+                DestinationBankCurrencyCode = "CurrencyCode",
+                DestinationBankCurrencyId = 1,
+                DestinationBankCurrencySymbol = "CurrencySymbol",
+                DestinationBankId = 1,
+                DestinationBankName = "BankName",
+                IsPosted = true,
+                AfterNominalValas = 1,
+                BeforeNominalValas = 1,
+                TransactionNominal = 1,
+                NominalValas = 1,
+                Receiver = "Receiver",
+                CurrencyRate=10
+            };
+
+            //Act
+            var result = await service.AutoJournalFromDailyBankTransaction(dailyModel, acc1,acc2);
+            //Assert
+            Assert.NotEqual(0, result);
+
+            dailyModel.BankCharges = 100;
+            var resultwithBankCharges = await service.AutoJournalFromDailyBankTransaction(dailyModel, acc1, acc2);
+            Assert.NotEqual(0, resultwithBankCharges);
+
+            dailyModel.DestinationBankCurrencyCode = "IDR";
+            dailyModel.BankCharges = 100;
+            dailyModel.Rates = 100;
+            var resultDiffCurrencyToIDR = await service.AutoJournalFromDailyBankTransaction(dailyModel, acc1, acc2);
+            Assert.NotEqual(0, resultDiffCurrencyToIDR);
+
+            dailyModel.DestinationBankCurrencyCode = "IDR";
+            dailyModel.BankCharges = 0;
+            dailyModel.Rates = 100;
+            var resultDiffCurrencyToIDRNoCharges = await service.AutoJournalFromDailyBankTransaction(dailyModel, acc1, acc2);
+            Assert.NotEqual(0, resultDiffCurrencyToIDR);
+
+            dailyModel.AccountBankCurrencyCode = "IDR";
+            dailyModel.DestinationBankCurrencyCode = "USD";
+            dailyModel.BankCharges = 0;
+            dailyModel.Rates = 100;
+            var resultDiffCurrencyNoCharges = await service.AutoJournalFromDailyBankTransaction(dailyModel, acc1, acc2);
+            Assert.NotEqual(0, resultDiffCurrencyNoCharges);
+
+            dailyModel.AccountBankCurrencyCode = "IDR";
+            dailyModel.DestinationBankCurrencyCode = "USD";
+            dailyModel.BankCharges = 100;
+            dailyModel.Rates = 100;
+            var resultDiffCurrency = await service.AutoJournalFromDailyBankTransaction(dailyModel, acc1, acc2);
+            Assert.NotEqual(0, resultDiffCurrency);
+
+        }
+
+        [Fact]
+        public async Task Should_Success_AutoJournalFromDisposition()
+        {
+            //Setup
+            var dbContext = GetDbContext(GetCurrentMethod());
+            var serviceProviderMock = GetServiceProvider();
+
+            serviceProviderMock.Setup(s => s.GetService(typeof(FinanceDbContext))).Returns(dbContext);
+            serviceProviderMock
+                .Setup(x => x.GetService(typeof(IHttpClientService)))
+                .Returns(new JournalHttpClientTestService());
+            Mock<IJournalTransactionService> journalTransactionServiceMock = new Mock<IJournalTransactionService>();
+
+            serviceProviderMock
+                .Setup(x => x.GetService(typeof(IJournalTransactionService)))
+                .Returns(journalTransactionServiceMock.Object);
+
+            var masterCOAServiceMock = new MasterCOAService(serviceProviderMock.Object);
+            serviceProviderMock
+               .Setup(x => x.GetService(typeof(IMasterCOAService)))
+               .Returns(masterCOAServiceMock);
+            var service = new AutoJournalService(dbContext, serviceProviderMock.Object);
+
+            long nowTicks = DateTimeOffset.Now.Ticks;
+            string nowTicksA = $"{nowTicks}a";
+            string nowTicksB = $"{nowTicks}b";
+            PaymentDispositionNoteModel dispositionNoteModel = new PaymentDispositionNoteModel()
+            {
+                SupplierImport = true,
+                SupplierCode = nowTicksA,
+                SupplierName = nowTicksA,
+                SupplierId = 1,
+                BankCurrencyCode = nowTicksA,
+                BankCurrencyId = 1,
+                BankCurrencyRate = 1,
+                BankAccountName = nowTicksA,
+                BankAccountNumber = nowTicksA,
+                BankCode = nowTicksA,
+                BankId = 1,
+                BankName = nowTicksA,
+                BankAccountCOA = nowTicksA,
+                TransactionType = "Any",
+                BGCheckNumber = nowTicksA,
+                Amount = 1000,
+                PaymentDate = DateTimeOffset.Now,
+
+                Items = new List<PaymentDispositionNoteItemModel>
+                {
+                    new PaymentDispositionNoteItemModel
+                    {
+                        PurchasingDispositionExpeditionId=1,
+                        CategoryCode="CategoryId",
+                        CategoryId=1,
+                        CategoryName="CategoryName",
+                        DispositionDate=DateTimeOffset.Now,
+                        DispositionId=1,
+                        DispositionNo="DispositionNo",
+                        DivisionCode="DivisionCode",
+                        DivisionId=1,
+                        DivisionName="DivisionName",
+                        DPP=1000,
+                        VatValue=100,
+                        IncomeTaxValue=0,
+                        ProformaNo="ProformaNo",
+                        TotalPaid=1100,
+                        Details= new List<PaymentDispositionNoteDetailModel>
+                        {
+                            new PaymentDispositionNoteDetailModel
+                            {
+                                ProductCode="ProductCode",
+                                Price=1000,
+                                ProductId=1,
+                                ProductName="ProductName",
+                                UnitCode="UnitCode",
+                                UnitId=1,
+                                UnitName="UnitName",
+                                UomId=1,
+                                UomUnit="UomUnit",
+                                Quantity=1,
+                                PurchasingDispositionDetailId=1,
+                                PurchasingDispositionExpeditionItemId=1,
+                                EPOId="EPOId"
+                            }
+                        }
+
+                    },
+                    new PaymentDispositionNoteItemModel
+                    {
+                        PurchasingDispositionExpeditionId=1,
+                        CategoryCode="CategoryId",
+                        CategoryId=1,
+                        CategoryName="CategoryName",
+                        DispositionDate=DateTimeOffset.Now,
+                        DispositionId=1,
+                        DispositionNo="DispositionNo",
+                        DivisionCode="DivisionCode",
+                        DivisionId=1,
+                        DivisionName="DivisionName",
+                        DPP=1000,
+                        VatValue=0,
+                        IncomeTaxValue=0,
+                        ProformaNo="ProformaNo",
+                        TotalPaid=1000,
+                        SupplierPayment = 500,
+                        Details= new List<PaymentDispositionNoteDetailModel>
+                        {
+                            new PaymentDispositionNoteDetailModel
+                            {
+                                ProductCode="ProductCode",
+                                Price=1000,
+                                ProductId=1,
+                                ProductName="ProductName",
+                                UnitCode="UnitCode",
+                                UnitId=1,
+                                UnitName="UnitName",
+                                UomId=1,
+                                UomUnit="UomUnit",
+                                Quantity=1,
+                                PurchasingDispositionDetailId=1,
+                                PurchasingDispositionExpeditionItemId=1,
+                                EPOId="EPOId"
+                            },
+                            new PaymentDispositionNoteDetailModel
+                            {
+                                ProductCode="ProductCode",
+                                Price=1000,
+                                ProductId=1,
+                                ProductName="ProductName",
+                                UnitCode="UnitCode2",
+                                UnitId=1,
+                                UnitName="UnitName",
+                                UomId=1,
+                                UomUnit="UomUnit",
+                                Quantity=1,
+                                PurchasingDispositionDetailId=1,
+                                PurchasingDispositionExpeditionItemId=1,
+                                EPOId="EPOId"
+                            }
+                        }
+
+                    }
+                }
+            };
+
+            //Act
+            var result = await service.AutoJournalFromDisposition(dispositionNoteModel, "Username", "UserAgent");
+
+            dispositionNoteModel.SupplierImport = false;
+            var result2 = await service.AutoJournalFromDisposition(dispositionNoteModel, "Username", "UserAgent");
+
+            //Assert
+            Assert.Equal(0, result);
+            Assert.Equal(0, result2);
+        }
     }
 
     
@@ -476,6 +897,26 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransacti
         }
 
         public MemoryStream GenerateExcel(DateTimeOffset? dateFrom, DateTimeOffset? dateTo, int offSet)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<string> GetAllReferenceNo(string keyword)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<string> GetAllReferenceNo(string keyword, bool isVB)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<string> GetAllReferenceType(string keyword)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<string> GetAllReferenceType(string keyword, bool isVB)
         {
             throw new NotImplementedException();
         }
@@ -530,7 +971,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransacti
             throw new NotImplementedException();
         }
 
-        public List<JournalTransactionModel> ReadUnPostedTransactionsByPeriod(int month, int year)
+        public List<JournalTransactionModel> ReadUnPostedTransactionsByPeriod(int month, int year, string referenceNo, string referenceType, bool isVB)
         {
             throw new NotImplementedException();
         }

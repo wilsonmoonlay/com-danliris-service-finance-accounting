@@ -27,7 +27,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.JournalT
         }
 
         [HttpGet("transaction")]
-        public IActionResult GetTransaction([FromQuery] DateTimeOffset? datefrom = null, [FromQuery] DateTimeOffset? dateto = null, int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")]List<string> select = null, string keyword = null, string filter = "{}")
+        public IActionResult GetTransaction([FromQuery] DateTimeOffset? datefrom = null, [FromQuery] DateTimeOffset? dateto = null, int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
         {
             try
             {
@@ -116,7 +116,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.JournalT
         }
 
         [HttpGet("report/downloads/xls")]
-        public  IActionResult GetXls([FromQuery] DateTimeOffset? dateFrom = null, [FromQuery] DateTimeOffset? dateTo = null)
+        public IActionResult GetXls([FromQuery] DateTimeOffset? dateFrom = null, [FromQuery] DateTimeOffset? dateTo = null)
         {
             try
             {
@@ -290,22 +290,68 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.JournalT
         }
 
         [HttpGet("unposted-transactions")]
-        public IActionResult GetUnPosted(int month = 0, int year = 0)
+        public IActionResult GetUnPosted([FromQuery] string referenceNo, [FromQuery] string referenceType, [FromQuery] int month = 0, [FromQuery] int year = 0, [FromQuery] bool isVB = false)
         {
             try
             {
+                VerifyUser();
+
                 if (month.Equals(0))
                     month = DateTime.Now.Month;
                 if (year.Equals(0))
                     year = DateTime.Now.Year;
 
-                List<JournalTransactionModel> result = Service.ReadUnPostedTransactionsByPeriod(month, year);
+                List<JournalTransactionModel> result = Service.ReadUnPostedTransactionsByPeriod(month, year, referenceNo, referenceType, isVB);
 
                 List<JournalTransactionViewModel> dataVM = Mapper.Map<List<JournalTransactionViewModel>>(result);
 
                 Dictionary<string, object> Result =
                     new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE)
                     .Ok(Mapper, dataVM);
+                return Ok(Result);
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("reference-no")]
+        public IActionResult GetReferenceNo([FromQuery] string keyword, [FromQuery] bool isVB = false)
+        {
+            try
+            {
+
+                var result = Service.GetAllReferenceNo(keyword, isVB);
+
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE)
+                    .Ok(Mapper, result);
+                return Ok(Result);
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("reference-type")]
+        public IActionResult GetReferenceType([FromQuery] string keyword, [FromQuery] bool isVB = false)
+        {
+            try
+            {
+
+                var result = Service.GetAllReferenceType(keyword, isVB);
+
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE)
+                    .Ok(Mapper, result);
                 return Ok(Result);
             }
             catch (Exception e)

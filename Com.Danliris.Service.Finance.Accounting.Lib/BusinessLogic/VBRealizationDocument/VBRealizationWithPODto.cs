@@ -16,5 +16,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizatio
         public CurrencyDto Currency { get; set; }
         public List<VBRealizationWithPOItemDto> Items { get;  set; }
         public VBRealizationPosition Position { get; set; }
+        public string Remark { get; set; }
     }
 }

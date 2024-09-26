@@ -55,9 +55,8 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
                 VerifyUser();
                 _validateService.Validate(viewModel);
 
-                MemoDetailGarmentPurchasingModel model = _mapper.Map<MemoDetailGarmentPurchasingModel>(viewModel);
                 
-                await _service.CreateAsync(model);
+                await _service.CreateAsync(viewModel);
                 
                 var result = new ResultFormatter(ApiVersion, General.CREATED_STATUS_CODE, General.OK_MESSAGE).Ok();
                 return Created(String.Concat(Request.Path, "/", 0), result);
@@ -96,11 +95,11 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
         }
 
         [HttpGet("{Id}")]
-        public IActionResult GetById([FromRoute] int Id)
+        public async Task<IActionResult> GetById([FromRoute] int Id)
         {
             try
             {
-                var viewModel = _service.GetDetailById(Id);
+                var viewModel = await _service.ReadByIdAsync(Id);
 
                 if (viewModel == null)
                 {
@@ -109,7 +108,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
                 }
                 else
                 {
-                    var result = new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE).Ok<DetailRincian>(_mapper, viewModel);
+                    var result = new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE).Ok<MemoDetailGarmentPurchasingViewModel>(_mapper, viewModel);
                     return Ok(result);
                 }
             }
@@ -140,7 +139,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put([FromRoute] int id, [FromBody] EditDetailRincian viewModel)
+        public async Task<IActionResult> Put([FromRoute] int id, [FromBody] MemoDetailGarmentPurchasingViewModel viewModel)
         {
             try
             {
@@ -175,6 +174,23 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
             {
                 VerifyUser();
                 await _service.DeleteAsync(id);
+
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                var result = new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message).Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, result);
+            }
+        }
+
+        [HttpPut("posting")]
+        public IActionResult Posting([FromBody] PostingFormDto form)
+        {
+            try
+            {
+                VerifyUser();
+                _service.Posting(form.Ids);
 
                 return NoContent();
             }
@@ -309,5 +325,15 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoDeta
             new MonthName(11, "November"),
             new MonthName(12, "Desember"),
         };
+    }
+
+    public class PostingFormDto
+    {
+        public PostingFormDto()
+        {
+
+        }
+
+        public List<int> Ids { get; set; }
     }
 }

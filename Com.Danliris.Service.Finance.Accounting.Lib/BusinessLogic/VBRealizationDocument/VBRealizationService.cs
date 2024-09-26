@@ -11,6 +11,8 @@ using Newtonsoft.Json;
 using Com.Moonlay.NetCore.Lib;
 using Microsoft.EntityFrameworkCore;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDocument;
+using Com.Danliris.Service.Finance.Accounting.Lib.Services.HttpClientService;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.JournalTransaction;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizationDocument
 {
@@ -20,11 +22,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizatio
         public readonly FinanceDbContext _dbContext;
 
         private readonly IIdentityService _identityService;
+        private readonly IServiceProvider _serviceProvider;
 
         public VBRealizationService(FinanceDbContext dbContext, IServiceProvider serviceProvider)
         {
             _dbContext = dbContext;
             _identityService = serviceProvider.GetService<IIdentityService>();
+            _serviceProvider = serviceProvider;
         }
 
         public ReadResponse<VBRealizationDocumentModel> Read(int page, int size, string order, List<string> select, string keyword, string filter)
@@ -74,6 +78,12 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizatio
             }
 
             return new Tuple<VBRealizationDocumentModel, List<VBRealizationDocumentExpenditureItemModel>, List<VBRealizationDocumentUnitCostsItemModel>>(data, items, unitCostItems);
+        }
+
+        public PostingJournalDto ReadByReferenceNo(string referenceNo)
+        {
+            var result = _dbContext.VBRealizationDocuments.Where(entity => entity.ReferenceNo == referenceNo).Select(entity => new PostingJournalDto(entity.VBRequestDocumentNo, entity.DocumentNo)).FirstOrDefault();
+            return result;
         }
     }
 }

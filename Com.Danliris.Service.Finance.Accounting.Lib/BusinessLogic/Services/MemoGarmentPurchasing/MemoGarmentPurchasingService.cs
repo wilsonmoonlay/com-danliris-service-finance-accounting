@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 using Com.Moonlay.NetCore.Lib;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.MemoGarmentPurchasing;
 using System.Globalization;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.JournalTransaction;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtBalance;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.MemoGarmentPurchasing
 {
@@ -20,12 +22,14 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
     {
         private readonly FinanceDbContext _context;
         private readonly IIdentityService _identityService;
+        private readonly IGarmentDebtBalanceService _debtBalance;
         private const string UserAgent = "finance-service";
 
         public MemoGarmentPurchasingService(FinanceDbContext context, IServiceProvider serviceProvider)
         {
             _context = context;
             _identityService = serviceProvider.GetService<IIdentityService>();
+            _debtBalance = serviceProvider.GetService<IGarmentDebtBalanceService>();
         }
 
         public async Task<int> CreateAsync(MemoGarmentPurchasingModel model)
@@ -187,23 +191,86 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Mem
 
         private string GetMemoNo(MemoGarmentPurchasingModel model)
         {
-            var date = DateTime.Now;
-            var count = 1 + _context.MemoGarmentPurchasings.Count(x => x.CreatedUtc.Year.Equals(date.Year) && x.CreatedUtc.Month.Equals(date.Month));
+            var date = model.MemoDate;
+            //var count = 1 + _context.MemoGarmentPurchasings.Count(x => x.CreatedUtc.Year.Equals(date.Year) && x.CreatedUtc.Month.Equals(date.Month));
+            var count = 1 + _context.MemoGarmentPurchasings.Count(x => x.MemoDate.Year.Equals(date.Year) && x.MemoDate.Month.Equals(date.Month));
+
 
             var generatedNo = $"{date.ToString("MM")}{date.ToString("yy")}.MG.{count.ToString("0000")}";
 
             return generatedNo;
         }
 
-        private int GetTotalAmount(ICollection<MemoGarmentPurchasingDetailModel> model)
+        private double GetTotalAmount(ICollection<MemoGarmentPurchasingDetailModel> model)
         {
-            var total = 0;
-            foreach(var detail in model)
+            double total = 0;
+            foreach (var detail in model)
             {
                 total += detail.DebitNominal;
             }
 
             return total;
+        }
+
+        public async Task<int> Posting(List<JournalTransactionModel> models)
+        {
+            var transaction = _context.Database.BeginTransaction();
+            try
+            {
+                int no = 1;
+                foreach (var model in models)
+                {
+                    var modelId = model.Id;
+                    model.DocumentNo = GetDocumentNo(no);
+                    model.Description = "Auto Journal Memo Pembelian Job Garment";
+                    model.Status = "Draft";
+                    model.IsReverser = false;
+                    model.IsReversed = false;
+                    model.Id = 0;
+
+                    EntityExtension.FlagForCreate(model, _identityService.Username, UserAgent);
+                    foreach (var item in model.Items)
+                    {
+                        item.Remark = "";
+                        EntityExtension.FlagForCreate(item, _identityService.Username, UserAgent);
+                    }
+                    no++;
+
+                    ///update posting data
+                    var getDataById = _context.MemoGarmentPurchasings.FirstOrDefault(s => s.Id == modelId);
+                    if (getDataById != null)
+                    {
+                        getDataById.IsPosted = true;
+                        EntityExtension.FlagForUpdate(getDataById, _identityService.Username, UserAgent);
+                        var resultUpdateFlag = _context.SaveChanges();
+                    }
+
+                }
+
+                _context.JournalTransactions.AddRange(models);
+
+                var result = await _context.SaveChangesAsync();
+
+                transaction.Commit();
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                transaction.Rollback();
+                throw e;
+            }
+
+        }
+
+        private string GetDocumentNo(int no)
+        {
+            var date = DateTime.Now;
+            var count = no + _context.JournalTransactions.Count(x => x.CreatedUtc.Year.Equals(date.Year) && x.CreatedUtc.Month.Equals(date.Month));
+
+            var generatedNo = $"G{date.ToString("MM")}{date.ToString("yyyy")}{count.ToString("0000")}";
+
+            return generatedNo;
         }
     }
 }

@@ -105,6 +105,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.VBR
                 string unitCode = GetDocumentUnitCode(vm.Unit.Division.Name.ToUpper(), vm.IsInklaring);
                 var existingData = _dbContext.VBRealizationDocuments
                     .Where(a => a.Date.AddHours(_identityService.TimezoneOffset).Month == vm.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Month
+                    && a.Date.AddHours(_identityService.TimezoneOffset).Year == vm.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Year
                     && a.DocumentNo.StartsWith(unitCode))
                     .OrderByDescending(s => s.Index)
                     .FirstOrDefault();
@@ -307,6 +308,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.VBR
                     Purpose = model.VBRequestDocumentPurpose
                 },
                 VBNonPOType = model.VBNonPoType,
+                InvoiceNo = model.InvoiceNo,
                 Remark = model.Remark,
                 Items = items.Select(s => new VBRealizationDocumentNonPOExpenditureItemViewModel()
                 {
@@ -333,6 +335,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.VBR
                     LastModifiedAgent = s.LastModifiedAgent,
                     LastModifiedBy = s.LastModifiedBy,
                     LastModifiedUtc = s.LastModifiedUtc,
+                    VatTax = new VatTaxViewModel()
+                    {
+                        Id = s.VatId,
+                        Rate = s.VatRate,
+                    },
                     Remark = s.Remark
                 }).ToList(),
                 UnitCosts = unitCosts.Select(s => new VBRealizationDocumentNonPOUnitCostViewModel()
@@ -442,6 +449,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.VBR
                     item.SetAmount(formItem.Amount, _identityService.Username, UserAgent);
                     item.SetDate(formItem.DateDetail.GetValueOrDefault(), _identityService.Username, UserAgent);
                     item.SetIncomeTax(formItem.IncomeTax.Id, formItem.IncomeTax.Rate.GetValueOrDefault(), formItem.IncomeTax.Name, _identityService.Username, UserAgent);
+                    item.SetVatTax(formItem.VatTax.Id, formItem.VatTax.Rate, _identityService.Username, UserAgent);
                     item.SetIncomeTaxBy(formItem.IncomeTaxBy, _identityService.Username, UserAgent);
                     item.SetRemark(formItem.Remark, _identityService.Username, UserAgent);
                     item.SetUseIncomeTax(formItem.IsGetPPh, _identityService.Username, UserAgent);
@@ -506,6 +514,15 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.VBR
             _dbContext.VBRealizationDocumentUnitCostsItems.AddRange(models);
 
             //return _dbContext.SaveChangesAsync();
+        }
+
+        public double CheckInvoiceNo(int id, string invoiceNo)
+        {
+            var query = _dbContext.VBRealizationDocuments.Where(s => s.VBRequestDocumentId == id).ToList();
+
+            var GetInvoiceNo = query.Where(s => s.InvoiceNo == invoiceNo).ToList();
+
+            return GetInvoiceNo.Count();
         }
     }
 }

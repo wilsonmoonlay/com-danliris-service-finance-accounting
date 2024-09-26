@@ -2,6 +2,7 @@
 using Com.Danliris.Service.Finance.Accounting.Lib.Helpers;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentPurchasingExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.IdentityService;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentPurchasingExpedition;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -27,9 +28,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
             _serviceProvider = serviceProvider;
         }
 
-        public MemoryStream GenerateExcel(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset startDate, DateTimeOffset endDate)
+        public MemoryStream GenerateExcel(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset startDate, DateTimeOffset endDate, DateTimeOffset startDateAccounting, DateTimeOffset endDateAccounting)
         {
-            var query = GetQuery(internalNoteId, supplierId, position, startDate, endDate);
+            var query = GetQuery(internalNoteId, supplierId, position, startDate, endDate, startDateAccounting, endDateAccounting);
 
             DataTable dt = new DataTable();
             dt.Columns.Add(new DataColumn() { ColumnName = "No. NI", DataType = typeof(string) });
@@ -45,13 +46,16 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
             dt.Columns.Add(new DataColumn() { ColumnName = "Term Pembayaran", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Tempo", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Posisi", DataType = typeof(string) });
-            dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Pembelian Kirim", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Pembelian Kirim Verifikasi", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Pembelian Kirim Accounting", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Keterangan", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Admin", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Verif Terima", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Verif Kirim", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Verifikator", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Terima Kasir", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "No. Bukti Pengeluaran Bank", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Bukti Pengeluaran Bank", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Terima Pembelian", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Admin Pembelian", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Alasan", DataType = typeof(string) });
@@ -60,11 +64,12 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
 
             if (query.Count() == 0)
             {
-                dt.Rows.Add("", "", "", "", "", 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+                dt.Rows.Add("", "", "", "", "", 0, 0, 0, 0, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
             }
             else
             {
-                var data = query.OrderByDescending(s => s.LastModifiedUtc).ToList();
+                var queryViewModel = query;
+                var data = queryViewModel.OrderByDescending(s => s.LastModifiedUtc).ToList();
                 foreach (var item in data)
                 {
                     dt.Rows.Add(
@@ -82,12 +87,15 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
                         item.PaymentDueDays.ToString(),
                         item.Position.ToDescriptionString(),
                         item.SendToVerificationDate?.ToOffset(new TimeSpan(_identityService.TimezoneOffset, 0, 0)).ToString("d/M/yyyy", new CultureInfo("id-ID")),
+                        item.SendToAccountingDate?.ToOffset(new TimeSpan(_identityService.TimezoneOffset, 0, 0)).ToString("d/M/yyyy", new CultureInfo("id-ID")),
+                        item.Remark,
                         item.SendToVerificationBy,
                         item.VerificationAcceptedDate?.ToOffset(new TimeSpan(_identityService.TimezoneOffset, 0, 0)).ToString("d/M/yyyy", new CultureInfo("id-ID")),
-                        item.SendToVerificationDate?.ToOffset(new TimeSpan(_identityService.TimezoneOffset, 0, 0)).ToString("d/M/yyyy", new CultureInfo("id-ID")),
+                        item.VerificationSendDate?.ToOffset(new TimeSpan(_identityService.TimezoneOffset, 0, 0)).ToString("d/M/yyyy", new CultureInfo("id-ID")),
                         item.VerificationAcceptedBy,
                         item.CashierAcceptedDate?.ToOffset(new TimeSpan(_identityService.TimezoneOffset, 0, 0)).ToString("d/M/yyyy", new CultureInfo("id-ID")),
-                        null,
+                        item.BankExpenditureNoteNo,
+                        item.BankExpenditureNoteDate?.ToOffset(new TimeSpan(_identityService.TimezoneOffset, 0, 0)).ToString("d/M/yyyy", new CultureInfo("id-ID")),
                         item.SendToPurchasingDate?.ToOffset(new TimeSpan(_identityService.TimezoneOffset, 0, 0)).ToString("d/M/yyyy", new CultureInfo("id-ID")),
                         item.SendToPurchasingBy,
                         item.SendToPurchasingRemark,
@@ -100,13 +108,19 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
             return Excel.CreateExcel(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(dt, "Laporan Ekspedisi Garment") }, true);
         }
 
-        public List<GarmentPurchasingExpeditionModel> GetReport(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset startDate, DateTimeOffset endDate)
+        public List<GarmentPurchasingExpeditionReportViewModel> GetReport(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset startDate, DateTimeOffset endDate, DateTimeOffset startDateAccounting, DateTimeOffset endDateAccounting)
         {
-            var query = GetQuery(internalNoteId, supplierId, position, startDate, endDate);
+            var query = GetQuery(internalNoteId, supplierId, position, startDate, endDate, startDateAccounting,  endDateAccounting);
+            return query.ToList();
+        }
+        public List<GarmentPurchasingExpeditionReportViewModel> GetReportViewModel(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset startDate, DateTimeOffset endDate, DateTimeOffset startDateAccounting, DateTimeOffset endDateAccounting)
+        {
+            var query = GetQuery(internalNoteId, supplierId, position, startDate, endDate,  startDateAccounting,  endDateAccounting);
+            //var queryViewModel = query.Select(entity => new GarmentPurchasingExpeditionReportViewModel(entity));
             return query.ToList();
         }
 
-        private IQueryable<GarmentPurchasingExpeditionModel> GetQuery(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset startDate, DateTimeOffset endDate)
+        private IQueryable<GarmentPurchasingExpeditionReportViewModel> GetQuery(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset startDate, DateTimeOffset endDate, DateTimeOffset startDateAccounting, DateTimeOffset endDateAccounting)
         {
             var result = _dbContext.GarmentPurchasingExpeditions.AsQueryable();
 
@@ -150,7 +164,61 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentPurch
             if (internalNoteId > 0)
                 result = result.Where(entity => entity.InternalNoteId == internalNoteId);
 
-            return result;
+            result = result.Where(entity => entity.SendToAccountingDate.GetValueOrDefault() >= startDateAccounting && entity.SendToAccountingDate.GetValueOrDefault() <= endDateAccounting);
+
+
+            var query = from a in result
+                        join b in _dbContext.DPPVATBankExpenditureNoteItems on a.InternalNoteId equals b.InternalNoteId into l
+                        from b in l.DefaultIfEmpty()
+                        join c in _dbContext.DPPVATBankExpenditureNotes on b.DPPVATBankExpenditureNoteId equals c.Id into m
+                        from c in m.DefaultIfEmpty()
+                        select new GarmentPurchasingExpeditionReportViewModel
+                        {
+                            InternalNoteId = a.InternalNoteId,
+                            InternalNoteNo = a.InternalNoteNo,
+                            InternalNoteDate = a.InternalNoteDate,
+                            InternalNoteDueDate = a.InternalNoteDueDate,
+                            SupplierId = a.SupplierId,
+                            SupplierName = a.SupplierName,
+                            DPP = a.DPP,
+                            VAT = a.VAT,
+                            CorrectionAmount = a.CorrectionAmount,
+                            IncomeTax = a.IncomeTax,
+                            TotalPaid = a.TotalPaid,
+                            CurrencyId = a.CurrencyId,
+                            CurrencyCode = a.CurrencyCode,
+                            PaymentType = a.PaymentType,
+                            InvoicesNo = a.InvoicesNo,
+                            PaymentMethod = a.PaymentMethod,
+                            PaymentDueDays = a.PaymentDueDays,
+                            Remark = a.Remark,
+                            Position = a.Position,
+                            SendToVerificationDate = a.SendToVerificationDate,
+                            SendToVerificationBy = a.SendToVerificationBy,
+                            VerificationAcceptedDate = a.VerificationAcceptedDate,
+                            VerificationAcceptedBy = a.VerificationAcceptedBy,
+                            SendToCashierDate = a.SendToCashierDate,
+                            SendToCashierBy = a.SendToCashierBy,
+                            CashierAcceptedDate = a.CashierAcceptedDate,
+                            CashierAcceptedBy = a.CashierAcceptedBy,
+                            SendToPurchasingDate = a.SendToPurchasingDate,
+                            SendToPurchasingBy = a.SendToPurchasingBy,
+                            SendToPurchasingRemark = a.SendToPurchasingRemark,
+                            SendToAccountingDate = a.SendToAccountingDate,
+                            SendToAccountingBy = a.SendToAccountingBy,
+                            AccountingAcceptedDate = a.AccountingAcceptedDate,
+                            AccountingAcceptedBy = a.AccountingAcceptedBy,
+                            VerificationSendDate = 
+                            (a.Position == GarmentPurchasingExpeditionPosition.SendToCashier || a.Position == GarmentPurchasingExpeditionPosition.CashierAccepted ||  a.Position == GarmentPurchasingExpeditionPosition.DispositionPayment? a.SendToCashierDate :
+                            a.Position == GarmentPurchasingExpeditionPosition.SendToAccounting || a.Position == GarmentPurchasingExpeditionPosition.AccountingAccepted? a.SendToAccountingDate : a.SendToPurchasingDate
+                            ),
+                            BankExpenditureNoteNo = b == null? "-":( a.CashierAcceptedDate == null? "-": c.DocumentNo),
+                            BankExpenditureNoteDate = a.CashierAcceptedDate != null ? c.Date : (DateTimeOffset?)null
+
+                        };
+        
+
+            return query;
         }
     }
 }

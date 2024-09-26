@@ -83,6 +83,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentDebtBalance
         public DateTimeOffset ArrivalDate { get; private set; }
         [MaxLength(128)]
         public string PaymentType { get; private set; }
+        public int MemoDetailId { get; set; }
+        public string MemoNo { get; set; }
+        public double MemoAmount { get; set; }
+        public double PaymentRate { get; set; }
 
         public void SetInternalNote(int internalNoteId, string internalNoteNo)
         {
@@ -110,6 +114,14 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentDebtBalance
             IsPayVAT = isPayVAT;
             IsPayIncomeTax = isPayIncomeTax;
             VATNo = vatNo;
+        }
+
+        public void SetMemo(int memoDetailId, string memoNo, double memoAmount, double paymentRate)
+        {
+            MemoDetailId = memoDetailId;
+            MemoNo = memoNo;
+            MemoAmount = memoAmount;
+            PaymentRate = paymentRate;
         }
     }
 }

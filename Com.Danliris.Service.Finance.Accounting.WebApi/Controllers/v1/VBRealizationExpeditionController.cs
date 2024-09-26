@@ -415,6 +415,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
             dt.Columns.Add(new DataColumn() { ColumnName = "Divisi", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Tgl. Unit Kirim", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Keperluan", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Keterangan Realisasi", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Mata Uang VB", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Nominal VB", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Mata Uang Realisasi", DataType = typeof(string) });
@@ -430,7 +431,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
             int index = 0;
             if (data.Count == 0)
             {
-                dt.Rows.Add("", "", "", "", "", "", "", "", "", 0.ToString("#,##0.#0"), "", 0.ToString("#,##0.#0"), "", "", "", "", "", "", "");
+                dt.Rows.Add("", "", "", "", "", "", "", "", "","", 0.ToString("#,##0.#0"), "", 0.ToString("#,##0.#0"), "", "", "", "", "", "", "");
                 index++;
             }
             else
@@ -453,6 +454,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
                         datum.DivisionName,
                         sendToVerificationDate,
                         datum.Purpose,
+                        datum.RemarkRealization,
                         datum.CurrencyCode,
                         datum.VBAmount.ToString("#,##0.#0"),
                         datum.CurrencyCode,

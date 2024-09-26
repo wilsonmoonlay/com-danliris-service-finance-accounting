@@ -168,5 +168,23 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.VBRealizationDoc
             //Assert
             Assert.NotEqual(0, result);
         }
+
+        [Fact]
+        public void Should_Success_Input_When_VB_InvoiceNo_Exists()
+        {
+            //Setup
+            var serviceProviderMock = GetServiceProviderMock();
+            var dbContext = GetDbContext(GetCurrentMethod());
+            VBRealizationDocumentNonPOService service = new VBRealizationDocumentNonPOService(serviceProviderMock.Object, dbContext);
+            var data = GetDataUtil(service).GetTestData();
+            var vm = GetDataUtil(service).GetNewData_VBRealizationDocumentNonPOViewModel();
+
+            vm.VBDocument.Id = 1;
+            vm.InvoiceNo = "Test123";
+            var result = service.CheckInvoiceNo(vm.VBDocument.Id, vm.InvoiceNo);
+
+            //Assert
+            Assert.Equal(0, result);
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Com.Danliris.Service.Finance.Accounting.Lib.Models.DPPVATBankExpenditureNote;
 using System;
+using System.Collections.Generic;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.DPPVATBankExpenditureNote
 {
@@ -34,5 +35,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.DPPVATBankEx
         public string PaymentBills { get; set; }
         public string BillsNo { get; set; }
         public int Id { get; set; }
+        public List<DeliveryOrderDto> DetailDO { get; set; }
     }
 }

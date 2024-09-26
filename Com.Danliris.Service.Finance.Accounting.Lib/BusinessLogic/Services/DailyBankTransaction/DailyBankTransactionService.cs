@@ -31,6 +31,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
         protected IIdentityService _IdentityService;
         private readonly IServiceProvider _serviceProvider;
         public FinanceDbContext _DbContext;
+        private readonly IAutoJournalService _autoJournalService;
 
         public DailyBankTransactionService(IServiceProvider serviceProvider, FinanceDbContext dbContext)
         {
@@ -39,15 +40,54 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
             _DbMonthlyBalanceSet = dbContext.Set<BankTransactionMonthlyBalanceModel>();
             _IdentityService = serviceProvider.GetService<IIdentityService>();
             _serviceProvider = serviceProvider;
+            _autoJournalService = serviceProvider.GetService<IAutoJournalService>();
         }
+
+        //private async Task<GarmentCurrency> GetCurrencyByCurrencyCodeDate(string currencyCode, DateTimeOffset date)
+        //{
+        //    var jsonSerializerSettings = new JsonSerializerSettings
+        //    {
+        //        MissingMemberHandling = MissingMemberHandling.Ignore
+        //    };
+
+        //    var httpClient = (IHttpClientService)_serviceProvider.GetService(typeof(IHttpClientService));
+
+        //    var currencyUri = APIEndpoint.Core + $"master/garment-currencies/single-by-code-date?code={currencyCode}&stringDate={date.DateTime.ToString("yyyy-MM-dd")}";
+        //    var currencyResponse = await httpClient.GetAsync(currencyUri);
+
+        //    var currencyResult = new BaseResponse<GarmentCurrency>()
+        //    {
+        //        data = new GarmentCurrency()
+        //    };
+
+        //    if (currencyResponse.IsSuccessStatusCode)
+        //    {
+        //        currencyResult = JsonConvert.DeserializeObject<BaseResponse<GarmentCurrency>>(currencyResponse.Content.ReadAsStringAsync().Result, jsonSerializerSettings);
+        //    }
+
+        //    return currencyResult.data;
+        //}
 
         public async Task<int> CreateAsync(DailyBankTransactionModel model)
         {
+            var timeOffset = new TimeSpan(_IdentityService.TimezoneOffset, 0, 0);
             do
             {
                 model.Code = CodeGenerator.Generate();
             }
             while (_DbSet.Any(d => d.Code.Equals(model.Code)));
+
+            var currency = await GetBICurrency(model.AccountBankCurrencyCode, model.Date);
+            model.CurrencyRate = currency == null ? 1 : (decimal)currency.Rate.GetValueOrDefault();
+            if (model.CurrencyRate <= 0)
+                model.CurrencyRate = 1;
+
+            if (model.AccountBankCurrencyCode != "IDR" && 
+                model.ReferenceType != "Pembayaran Disposisi" && model.ReferenceType != "Pengeluaran Bank Lain-lain" && model.ReferenceType != "Bayar Hutang" && model.ReferenceType != "Bayar PPh" && !model.ReferenceType.Contains("VB"))
+            {
+                model.NominalValas = model.Nominal;
+                model.Nominal = model.Nominal * model.CurrencyRate;
+            }
 
             model.Date = model.Date.AddHours(_IdentityService.TimezoneOffset);
 
@@ -57,9 +97,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
             if (string.IsNullOrWhiteSpace(model.ReferenceNo))
             {
                 if (model.Status == "OUT")
-                    model.ReferenceNo = await GetDocumentNo("K", model.AccountBankCode, _IdentityService.Username);
+                    model.ReferenceNo = await GetDocumentNo("K", model.AccountBankCode, _IdentityService.Username, model.Date.AddHours(7).Date);
                 else if (model.Status == "IN")
-                    model.ReferenceNo = await GetDocumentNo("M", model.AccountBankCode, _IdentityService.Username);
+                    model.ReferenceNo = await GetDocumentNo("M", model.AccountBankCode, _IdentityService.Username, model.Date.AddHours(7).Date);
             }
 
             EntityExtension.FlagForCreate(model, _IdentityService.Username, _UserAgent);
@@ -77,6 +117,26 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
 
             var http = _serviceProvider.GetService<IHttpClientService>();
             var uri = APIEndpoint.Purchasing + $"bank-expenditure-notes/bank-document-no?type={type}&bankCode={bankCode}&username={username}";
+            var response = await http.GetAsync(uri);
+
+            var result = new BaseResponse<string>();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                result = JsonConvert.DeserializeObject<BaseResponse<string>>(responseContent, jsonSerializerSettings);
+            }
+            return result.data;
+        }
+        public async Task<string> GetDocumentNo(string type, string bankCode, string username, DateTime date)
+        {
+            var jsonSerializerSettings = new JsonSerializerSettings
+            {
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+
+            var http = _serviceProvider.GetService<IHttpClientService>();
+            var uri = APIEndpoint.Purchasing + $"bank-expenditure-notes/bank-document-no-date?type={type}&bankCode={bankCode}&username={username}&date={date}";
             var response = await http.GetAsync(uri);
 
             var result = new BaseResponse<string>();
@@ -225,6 +285,16 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
             {
                 EntityExtension.FlagForDelete(model, _IdentityService.Username, _UserAgent);
                 _DbSet.Update(model);
+
+                if (model.FinancingSourceReferenceId > 0)
+                {
+                    var financingReferenceModel = _DbSet.FirstOrDefault(entity => entity.Id == model.FinancingSourceReferenceId && !entity.IsPosted);
+                    if (financingReferenceModel != null)
+                    {
+                        EntityExtension.FlagForDelete(financingReferenceModel, _IdentityService.Username, _UserAgent);
+                        _DbSet.Update(financingReferenceModel);
+                    }
+                }
             }
             return await _DbContext.SaveChangesAsync();
         }
@@ -232,12 +302,38 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
         public MemoryStream GetExcel(int bankId, int month, int year, int clientTimeZoneOffset)
         {
             string title = "Laporan Mutasi Bank Harian";
-            AccountBank dataAccountBank = GetAccountBank(bankId).GetAwaiter().GetResult();
+            var dataAccountBank = new List<AccountBank>();
+            var dataBankThisMonth = GetQueryBankOnly(bankId, month, year, clientTimeZoneOffset);
+            var bankIds = dataBankThisMonth.Select(s => new { s.AccountBankId, s.AccountBankCurrencyCode }).Distinct().ToList();
+            string date = new DateTime(year, month, DateTime.DaysInMonth(year, month)).ToString("dd MMMM yyyy");
 
-            if (dataAccountBank.Currency.Code == "IDR")
-                return GenerateExcel(dataAccountBank, title, month, year, clientTimeZoneOffset);
-            else
-                return GenerateExcelValas(dataAccountBank, title, month, year, clientTimeZoneOffset);
+
+            dataAccountBank = GetAccountBanks(bankIds.Select(s => s.AccountBankId).Distinct().ToList()).GetAwaiter().GetResult();
+            ExcelPackage package = new ExcelPackage();
+            foreach (var bnkId in dataAccountBank)
+            {
+                List<KeyValuePair<DataTable, string>> dataSheet = new List<KeyValuePair<DataTable, string>>();
+                var sheet = new KeyValuePair<DataTable, string>();
+                var bank = string.Empty;
+                if (bnkId.Currency.Code == "IDR")
+                {
+                    sheet = GenerateExcelPerSheet(bnkId, title, month, year, clientTimeZoneOffset);
+                    bank = sheet.Value;
+                    dataSheet.Add(sheet);
+                    package = Helpers.Excel.DailyMutationReportExcelPerSheet(package, dataSheet, title, bank, date);
+
+                }
+                else
+                {
+                    sheet = GenerateExcelValasPerSheet(bnkId, title, month, year, clientTimeZoneOffset);
+                    bank = sheet.Value;
+                    dataSheet.Add(sheet);
+                    package = Helpers.Excel.DailyMutationReportExcelPerSheet(package, dataSheet, title, bank, date);
+                }
+            }
+            MemoryStream stream = new MemoryStream();
+            package.SaveAs(stream);
+            return stream;
         }
 
         private MemoryStream GenerateExcel(AccountBank dataAccountBank, string title, int month, int year, int clientTimeZoneOffset)
@@ -288,7 +384,72 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
                 }
             }
 
-            return Excel.DailyMutationReportExcel(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(result, "Mutasi") }, title, bank, date, true, index);
+            return Helpers.Excel.DailyMutationReportExcel(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(result, "Mutasi") }, title, bank, date, true, index);
+        }
+        private KeyValuePair<DataTable, string> GenerateExcelPerSheet(AccountBank dataAccountBank, string title, int month, int year, int clientTimeZoneOffset)
+        {
+            //var dataTableBankExcel = new List<KeyValuePair<DataTable, string>>();
+            string date = new DateTime(year, month, DateTime.DaysInMonth(year, month)).ToString("dd MMMM yyyy");
+
+            //foreach (var dataAccountBank in dataAccountBanks)
+            //{
+            var Query = GetQuery(dataAccountBank.Id, month, year, clientTimeZoneOffset).OrderBy(s => s.Date);
+            //string date = new DateTime(year, month, DateTime.DaysInMonth(year, month)).ToString("dd MMMM yyyy");
+
+            string bank = $"({dataAccountBank.Id}) Bank {dataAccountBank.BankName} A/C : {dataAccountBank.AccountNumber}";
+
+            DataTable result = new DataTable();
+
+            result.Columns.Add(new DataColumn() { ColumnName = "Tanggal", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Keterangan", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Nomor Referensi", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Jenis Referensi", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Currency", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Before", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Debit", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Kredit", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Saldo", DataType = typeof(String) });
+
+            int index = 0;
+            if (Query.ToArray().Count() == 0)
+                result.Rows.Add("", "", "", "", "", 0.ToString("#,##0.#0"), 0.ToString("#,##0.#0"), 0.ToString("#,##0.#0"), 0.ToString("#,##0.#0")); // to allow column name to be generated properly for empty data as template
+            else
+            {
+                var BalanceByMonthAndYear = GetBalanceMonthAndYear(dataAccountBank.Id, month, year, clientTimeZoneOffset);
+                var beforeBalance = BalanceByMonthAndYear == null ? 0 : BalanceByMonthAndYear.InitialBalance;
+                decimal totalDebit = 0;
+                decimal totalKredit = 0;
+                //var previous = new DailyBankTransactionModel();
+                foreach (var item in Query)
+                {
+                    item.Nominal = item.CurrencyRate == 1 ? item.Nominal : (item.NominalValas == 0 ? item.Nominal : item.NominalValas * item.CurrencyRate);
+                    var debit = item.Status.ToUpper().Equals("IN") ? item.Nominal.ToString("#,##0.#0") : 0.ToString("#,##0.#0");
+                    var kredit = item.Status.ToUpper().Equals("OUT") ? item.Nominal.ToString("#,##0.#0") : 0.ToString("#,##0.#0");
+                    var afterBalance = beforeBalance + (item.Status.Equals("IN") ? (double)item.Nominal : (double)item.Nominal * -1);
+
+                    result.Rows.Add((item.Date.AddHours(clientTimeZoneOffset)).ToString("dd MMM yyyy", new CultureInfo("id-ID")),
+                        item.Remark,
+                        item.ReferenceNo,
+                        item.ReferenceType,
+                        item.AccountBankCurrencyCode,
+                        beforeBalance.ToString("#,##0.#0"),
+                        debit,
+                        kredit,
+                        afterBalance.ToString("#,##0.#0")
+                        );
+                    beforeBalance = afterBalance;
+                    totalDebit += item.Status.ToUpper().Equals("IN") ? item.Nominal : 0;
+                    totalKredit += item.Status.ToUpper().Equals("OUT") ? item.Nominal : 0;
+                    index++;
+                }
+                result.Rows.Add("", "", "", "", "", "TOTAL", totalDebit.ToString("#,##0.#0"), totalKredit.ToString("#,##0.#0"), "");
+                index++;
+                //}
+                //dataTableBankExcel.Add(new KeyValuePair<DataTable, string> (result, bank ));
+            }
+            //return Excel.DailyMutationReportExcel(dataTableBankExcel, title, date, true, 0);
+            //return dataTableBankExcel;
+            return new KeyValuePair<DataTable, string>(result, bank);
         }
 
         private MemoryStream GenerateExcelValas(AccountBank dataAccountBank, string title, int month, int year, int clientTimeZoneOffset)
@@ -409,6 +570,79 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
 
             //return Excel.DailyMutationReportExcel(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(result, "Mutasi") }, title, bank, date, true, index);
         }
+        private KeyValuePair<DataTable, string> GenerateExcelValasPerSheet(AccountBank dataAccountBank, string title, int month, int year, int clientTimeZoneOffset)
+        {
+            var Query = GetQuery(dataAccountBank.Id, month, year, clientTimeZoneOffset).OrderBy(s => s.Date);
+            DateTimeOffset newDate = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+            string date = new DateTime(year, month, DateTime.DaysInMonth(year, month)).ToString("dd MMMM yyyy");
+
+            var garmentCurrency = GetBICurrency(dataAccountBank.Currency.Code, newDate).GetAwaiter().GetResult();
+            string bank = $"({dataAccountBank.Id}) Bank {dataAccountBank.BankName} A/C : {dataAccountBank.AccountNumber}";
+
+            DataTable result = new DataTable();
+
+            result.Columns.Add(new DataColumn() { ColumnName = "Tanggal", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Keterangan", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Nomor Referensi", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Jenis Referensi", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Currency", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Before", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Debit", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Debit2", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Kredit", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "Kredit2", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "After", DataType = typeof(String) });
+            result.Columns.Add(new DataColumn() { ColumnName = "After2", DataType = typeof(String) });
+
+            int index = 0;
+            if (Query.ToArray().Count() == 0)
+                result.Rows.Add("", "", "", "", "", 0.ToString("#,##0.#0"), 0.ToString("#,##0.#0"), 0.ToString("#,##0.#0"), 0.ToString("#,##0.#0")); // to allow column name to be generated properly for empty data as template
+            else
+            {
+                DateTimeOffset firstDayOfMonth = new DateTime(year, month, 1);
+                var BalanceByMonthAndYear = GetBalanceMonthAndYear(dataAccountBank.Id, month, year, clientTimeZoneOffset);
+                var beforeBalance = BalanceByMonthAndYear == null ? 0 : BalanceByMonthAndYear.InitialBalance * garmentCurrency.Rate.GetValueOrDefault();
+                var beforeBalanceValas = BalanceByMonthAndYear == null ? 0 : BalanceByMonthAndYear.InitialBalance;
+                decimal totalDebit = 0;
+                decimal totalDebit2 = 0;
+                decimal totalKredit = 0;
+                decimal totalKredit2 = 0;
+                //var previous = new DailyBankTransactionModel();
+                foreach (var item in Query)
+                {
+                    var debit = item.Status.ToUpper().Equals("IN") ? item.Nominal.ToString("#,##0.#0") : 0.ToString("#,##0.#0");
+                    var kredit = item.Status.ToUpper().Equals("OUT") ? item.Nominal.ToString("#,##0.#0") : 0.ToString("#,##0.#0");
+                    var afterBalance = beforeBalance + (item.Status.Equals("IN") ? (double)item.Nominal : (double)item.Nominal * -1);
+                    var debitValas = item.Status.ToUpper().Equals("IN") ? item.NominalValas.ToString("#,##0.#0") : 0.ToString("#,##0.#0");
+                    var kreditValas = item.Status.ToUpper().Equals("OUT") ? item.NominalValas.ToString("#,##0.#0") : 0.ToString("#,##0.#0");
+                    var afterBalanceValas = beforeBalanceValas + (item.Status.Equals("IN") ? (double)item.NominalValas : (double)item.NominalValas * -1);
+
+                    result.Rows.Add(item.Date.ToOffset(new TimeSpan(clientTimeZoneOffset, 0, 0)).ToString("dd MMM yyyy", new CultureInfo("id-ID")),
+                        item.Remark,
+                        item.ReferenceNo,
+                        item.ReferenceType,
+                        item.AccountBankCurrencyCode,
+                        beforeBalanceValas.ToString("#,##0.#0"),
+                        debitValas,
+                        debit,
+                        kreditValas,
+                        kredit,
+                        afterBalanceValas.ToString("#,##0.#0"),
+                        afterBalance.ToString("#,##0.#0")
+                        );
+                    beforeBalance = afterBalance;
+                    beforeBalanceValas = afterBalanceValas;
+                    totalDebit2 += item.Status.ToUpper().Equals("IN") ? item.Nominal : 0;
+                    totalDebit += item.Status.ToUpper().Equals("IN") ? item.NominalValas : 0;
+                    totalKredit2 += item.Status.ToUpper().Equals("OUT") ? item.Nominal : 0;
+                    totalKredit += item.Status.ToUpper().Equals("OUT") ? item.NominalValas : 0;
+                    index++;
+                }
+                result.Rows.Add("", "", "", "", "", "TOTAL", totalDebit.ToString("#,##0.#0"), totalDebit2.ToString("#,##0.#0"), totalKredit.ToString("#,##0.#0"), totalKredit2.ToString("#,##0.#0"), "", "");
+                index++;
+            }
+            return new KeyValuePair<DataTable, string>(result, bank);
+        }
 
         private BankTransactionMonthlyBalanceModel GetBalanceMonthAndYear(int bankId, int month, int year, int clientTimeZoneOffset)
         {
@@ -431,20 +665,37 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
             return result.data;
         }
 
+        private async Task<GarmentCurrency> GetBICurrency(string codeCurrency, DateTimeOffset date)
+        {
+            string stringDate = date.ToString("yyyy/MM/dd HH:mm:ss");
+            string queryString = $"code={codeCurrency}&stringDate={stringDate}";
+
+            var http = _serviceProvider.GetService<IHttpClientService>();
+            var response = await http.GetAsync(APIEndpoint.Core + $"master/bi-currencies/single-by-code-date?{queryString}");
+
+            var responseString = await response.Content.ReadAsStringAsync();
+            var jsonSerializationSetting = new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Ignore };
+
+            var result = JsonConvert.DeserializeObject<APIDefaultResponse<GarmentCurrency>>(responseString, jsonSerializationSetting);
+
+            return result.data;
+        }
+
         private IQueryable<DailyBankTransactionModel> GetQuery(int bankId, int month, int year, int clientTimeZoneOffset)
         {
             //DateTimeOffset DateFrom = dateFrom == null ? dateTo == null ? DateTimeOffset.Now.AddDays(-30) : dateTo.Value.AddHours(clientTimeZoneOffset * -1).AddDays(-30) : dateFrom.Value.AddHours(clientTimeZoneOffset * -1);
             //DateTimeOffset DateTo = dateTo == null ? dateFrom == null ? DateTimeOffset.Now : dateFrom.Value.AddHours(clientTimeZoneOffset * -1).AddDays(DateTimeOffset.Now.Subtract(dateFrom.Value.AddHours(clientTimeZoneOffset * -1)).TotalDays) : dateTo.Value.AddHours(clientTimeZoneOffset * -1);
-            TimeSpan offset = new TimeSpan(clientTimeZoneOffset, 0 , 0);
+            TimeSpan offset = new TimeSpan(clientTimeZoneOffset, 0, 0);
 
             var Query = (from transaction in _DbContext.DailyBankTransactions
                          where
                          transaction.IsDeleted == false
-                         && transaction.AccountBankId == bankId
+                         && transaction.IsPosted
+                         //&& transaction.AccountBankId == bankId
                          //&& transaction.Date.Month == month
-                         && transaction.Date.ToOffset(offset).Month == month
-                         && transaction.Date.Year == year
-                         orderby transaction.Date, transaction.CreatedUtc
+                         && transaction.Date.AddHours(clientTimeZoneOffset).Month == month
+                         && transaction.Date.AddHours(clientTimeZoneOffset).Year == year
+                         orderby transaction.ReferenceNo
                          select new DailyBankTransactionModel
                          {
                              Id = transaction.Id,
@@ -453,22 +704,63 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
                              ReferenceNo = transaction.ReferenceNo,
                              ReferenceType = transaction.ReferenceType,
                              AccountBankCurrencyCode = transaction.AccountBankCurrencyCode,
+                             //BeforeNominal = transaction.BeforeNominal,
+                             //AfterNominal = transaction.AfterNominal,
+                             Nominal = transaction.Nominal,
                              BeforeNominal = transaction.BeforeNominal,
                              AfterNominal = transaction.AfterNominal,
-                             Nominal = transaction.Nominal,
-                             BeforeNominalValas = transaction.BeforeNominal * transaction.CurrencyRate,
-                             AfterNominalValas = transaction.AfterNominal * transaction.CurrencyRate,
+                             //Nominal = transaction.AccountBankCurrencyCode != transaction.AccountBankAccountName.Substring(transaction.AccountBankAccountName.Length - 3) ? (transaction.NominalValas == 0 ? transaction.Nominal : transaction.Nominal * transaction.CurrencyRate) : transaction.Nominal,
+                             BeforeNominalValas = transaction.BeforeNominalValas,
+                             AfterNominalValas = transaction.AfterNominalValas,
                              NominalValas = transaction.NominalValas,
+                             //NominalValas = transaction.NominalValas == 0 ? transaction.Nominal * (transaction.CurrencyRate == 0 ? 1 : transaction.CurrencyRate) : transaction.NominalValas,
                              Status = transaction.Status,
-                             CurrencyRate = transaction.CurrencyRate
+                             CurrencyRate = (transaction.CurrencyRate == 0 ? 1 : transaction.CurrencyRate),
+                             AccountBankAccountName = transaction.AccountBankAccountName,
+                             AccountBankAccountNumber = transaction.AccountBankAccountNumber,
+                             AccountBankCode = transaction.AccountBankCode,
+                             AccountBankCurrencyId = transaction.AccountBankCurrencyId,
+                             AccountBankCurrencySymbol = transaction.AccountBankCurrencySymbol,
+                             AccountBankId = transaction.AccountBankId,
+                             AccountBankName = transaction.AccountBankName
                          });
+            if (bankId > 0)
+                Query = Query.Where(transation => transation.AccountBankId == bankId);
+
+            return Query;
+        }
+
+        private IQueryable<DailyBankTransactionModel> GetQueryBankOnly(int bankId, int month, int year, int clientTimeZoneOffset)
+        {
+            //DateTimeOffset DateFrom = dateFrom == null ? dateTo == null ? DateTimeOffset.Now.AddDays(-30) : dateTo.Value.AddHours(clientTimeZoneOffset * -1).AddDays(-30) : dateFrom.Value.AddHours(clientTimeZoneOffset * -1);
+            //DateTimeOffset DateTo = dateTo == null ? dateFrom == null ? DateTimeOffset.Now : dateFrom.Value.AddHours(clientTimeZoneOffset * -1).AddDays(DateTimeOffset.Now.Subtract(dateFrom.Value.AddHours(clientTimeZoneOffset * -1)).TotalDays) : dateTo.Value.AddHours(clientTimeZoneOffset * -1);
+            TimeSpan offset = new TimeSpan(clientTimeZoneOffset, 0, 0);
+
+            var Query = (from transaction in _DbContext.DailyBankTransactions
+                         where
+                         transaction.IsDeleted == false
+                         && transaction.IsPosted
+                         //&& transaction.AccountBankId == bankId
+                         //&& transaction.Date.Month == month
+                         && transaction.Date.ToOffset(offset).Month == month
+                         && transaction.Date.Year == year
+                         orderby transaction.ReferenceNo
+                         select new DailyBankTransactionModel
+                         {
+                             Id = transaction.Id,
+                             AccountBankId = transaction.AccountBankId,
+                             AccountBankCurrencyCode = transaction.AccountBankCurrencyCode
+                         });
+
+            if (bankId > 0)
+                Query = Query.Where(transation => transation.AccountBankId == bankId);
 
             return Query;
         }
 
         public ReadResponse<DailyBankTransactionModel> GetReport(int bankId, int month, int year, int clientTimeZoneOffset)
         {
-            IQueryable<DailyBankTransactionModel> Query = GetQuery(bankId, month, year, clientTimeZoneOffset);
+            IQueryable<DailyBankTransactionModel> Query = GetQuery(bankId, month, year, clientTimeZoneOffset).OrderBy(s => s.Date);
 
             //var Test = Query.ToList();
             List<DailyBankTransactionModel> Result = Query.ToList();
@@ -483,9 +775,16 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
                 {
                     var afterBalance = beforeBalance + (item.Status.Equals("IN") ? (double)item.Nominal : (double)item.Nominal * -1);
                     item.BeforeNominal = (decimal)beforeBalance;
-                    item.BeforeNominalValas = (decimal)beforeBalance * item.CurrencyRate;
                     item.AfterNominal = (decimal)afterBalance;
-                    item.AfterNominalValas = (decimal)afterBalance * item.CurrencyRate;
+
+                    if (item.AccountBankCurrencyCode != "IDR")
+                    {
+                        item.BeforeNominal = (decimal)beforeBalance * item.CurrencyRate;
+                        item.BeforeNominalValas = (decimal)beforeBalance;
+                        item.AfterNominal = (decimal)afterBalance * item.CurrencyRate;
+                        item.AfterNominalValas = (decimal)afterBalance;
+                    }
+
                     beforeBalance = afterBalance;
                 }
             }
@@ -493,6 +792,139 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
             Dictionary<string, string> order = new Dictionary<string, string>();
 
             return new ReadResponse<DailyBankTransactionModel>(Result, Result.Count, order, new List<string>());
+        }
+
+        public ReadResponse<DailyBankTransactionModel> GetReportAll(string referenceNo, int accountBankId, string division, DateTimeOffset? startDate, DateTimeOffset? endDate, int page = 1, int size = 25, string order = "{}", List<string> select = null, string keyword = null, string filter = "{}")
+        {
+            IQueryable<DailyBankTransactionModel> Query = _DbSet.Where(entity => entity.IsPosted);
+
+            Query = Query
+                .Select(s => new DailyBankTransactionModel
+                {
+                    Id = s.Id,
+                    CreatedUtc = s.CreatedUtc,
+                    Code = s.Code,
+                    LastModifiedUtc = s.LastModifiedUtc,
+                    AccountBankName = s.AccountBankName,
+                    AccountBankAccountName = s.AccountBankAccountName,
+                    AccountBankAccountNumber = s.AccountBankAccountNumber,
+                    AccountBankCode = s.AccountBankCode,
+                    AccountBankCurrencyCode = s.AccountBankCurrencyCode,
+                    AccountBankCurrencyId = s.AccountBankCurrencyId,
+                    AccountBankCurrencySymbol = s.AccountBankCurrencySymbol,
+                    AccountBankId = s.AccountBankId,
+                    Date = s.Date,
+                    ReferenceNo = s.ReferenceNo,
+                    ReferenceType = s.ReferenceType,
+                    Status = s.Status,
+                    SourceType = s.SourceType,
+                    IsPosted = s.IsPosted,
+                    Remark = s.Remark,
+                    Nominal = s.Nominal,
+                    NominalValas = s.NominalValas,
+                    CurrencyRate = s.CurrencyRate
+                });
+
+            List<string> searchAttributes = new List<string>()
+            {
+                "Code", "ReferenceNo", "ReferenceType","AccountBankName", "AccountBankCurrencyCode", "Status", "SourceType"
+            };
+
+            Query = QueryHelper<DailyBankTransactionModel>.Search(Query, searchAttributes, keyword);
+
+            Dictionary<string, object> FilterDictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(filter);
+            Query = QueryHelper<DailyBankTransactionModel>.Filter(Query, FilterDictionary);
+
+            Dictionary<string, string> OrderDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(order);
+            Query = QueryHelper<DailyBankTransactionModel>.Order(Query, OrderDictionary);
+
+            //filter
+            if (!string.IsNullOrEmpty(referenceNo))
+                Query = Query.Where(s => s.ReferenceNo == referenceNo);
+
+            if (accountBankId > 0)
+                Query = Query.Where(s => s.AccountBankId == accountBankId);
+
+            var offset = _IdentityService.TimezoneOffset;
+            if (startDate.HasValue)
+            {
+                DateTimeOffset firstDay = new DateTime(startDate.Value.Year, startDate.Value.Month, startDate.Value.Day);
+                Query = Query.Where(s => s.Date.AddHours(offset).DateTime >= firstDay.DateTime);
+            }
+
+            if (endDate.HasValue)
+            {
+                DateTimeOffset lastDay = new DateTime(endDate.Value.Year, endDate.Value.Month, endDate.Value.Day);
+                Query = Query.Where(s => s.Date.AddHours(offset).DateTime < lastDay.AddDays(1).DateTime);
+            }
+
+            List<DailyBankTransactionModel> Data = new List<DailyBankTransactionModel>();
+            int TotalData = 0;
+
+            if (page > 0)
+            {
+                Pageable<DailyBankTransactionModel> pageable = new Pageable<DailyBankTransactionModel>(Query, page - 1, size);
+                Data = pageable.Data.ToList();
+                TotalData = pageable.TotalCount;
+            }
+            else
+            {
+                Data = Query.ToList();
+                TotalData = Data.Count;
+            }
+
+            List<DailyBankTransactionModel> list = new List<DailyBankTransactionModel>();
+            list.AddRange(
+               Data.Select(s => new DailyBankTransactionModel
+               {
+                   Id = s.Id,
+                   CreatedUtc = s.CreatedUtc,
+                   Code = s.Code,
+                   LastModifiedUtc = s.LastModifiedUtc,
+                   AccountBankName = s.AccountBankName,
+                   AccountBankAccountName = s.AccountBankAccountName,
+                   AccountBankAccountNumber = s.AccountBankAccountNumber,
+                   AccountBankCode = s.AccountBankCode,
+                   AccountBankCurrencyCode = s.AccountBankCurrencyCode,
+                   AccountBankCurrencyId = s.AccountBankCurrencyId,
+                   AccountBankCurrencySymbol = s.AccountBankCurrencySymbol,
+                   AccountBankId = s.AccountBankId,
+                   Date = s.Date,
+                   ReferenceNo = s.ReferenceNo,
+                   ReferenceType = s.ReferenceType,
+                   Status = s.Status,
+                   SourceType = s.SourceType,
+                   IsPosted = s.IsPosted,
+                   Nominal = s.AccountBankCurrencyCode != "IDR" ? (s.NominalValas == 0 ? s.Nominal : s.NominalValas) : s.Nominal
+               }).ToList()
+            );
+
+
+            return new ReadResponse<DailyBankTransactionModel>(list.OrderBy(element => element.Date).ToList(), TotalData, OrderDictionary, new List<string>());
+        }
+
+        public ReadResponse<DailyBankTransactionModel> GetLoader(string keyword = null, string filter = "{}")
+        {
+            IQueryable<DailyBankTransactionModel> Query = _DbSet;
+
+            Query = Query
+                .Select(s => new DailyBankTransactionModel
+                {
+                    ReferenceNo = s.ReferenceNo,
+                    Status = s.Status
+                });
+
+            List<string> searchAttributes = new List<string>()
+            {
+                "ReferenceNo"
+            };
+
+            Query = QueryHelper<DailyBankTransactionModel>.Search(Query, searchAttributes, keyword);
+
+            Dictionary<string, object> FilterDictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(filter);
+            Query = QueryHelper<DailyBankTransactionModel>.Filter(Query, FilterDictionary);
+
+            return new ReadResponse<DailyBankTransactionModel>(Query.Distinct().ToList(), Query.Count(), new Dictionary<string, string>(), new List<string>());
         }
 
         public ReadResponse<DailyBankTransactionModel> Read(int page, int size, string order, List<string> select, string keyword, string filter)
@@ -570,7 +1002,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
 
         public async Task<DailyBankTransactionModel> ReadByIdAsync(int id)
         {
-            return await _DbSet.Where(w => w.Id.Equals(id)).FirstOrDefaultAsync();
+            var data = await _DbSet.Where(w => w.Id.Equals(id)).FirstOrDefaultAsync();
+            if (data.AccountBankCurrencyCode != "IDR" && data.NominalValas != 0)
+            {
+                data.Nominal = data.NominalValas;
+            }
+
+            return data;
         }
 
         public async Task<int> UpdateAsync(int id, DailyBankTransactionModel model)
@@ -583,6 +1021,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
             //while (_DbSet.Any(d => d.Code.Equals(model.Code)));
 
             //model.Date = model.Date.AddHours(_IdentityService.TimezoneOffset);
+            var currency = await GetBICurrency(model.AccountBankCurrencyCode, model.Date);
+            model.CurrencyRate = (decimal)currency.Rate.GetValueOrDefault();
+            if (model.CurrencyRate <= 0)
+                model.CurrencyRate = 1;
 
             if (!model.IsPosted)
             {
@@ -594,13 +1036,139 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
                         model.ReferenceNo = await GetDocumentNo("M", model.AccountBankCode, _IdentityService.Username);
                 }
 
+                var nominal = model.Nominal;
+                var nominalValas = model.NominalValas;
+                var transactionNominal = model.TransactionNominal;
+
+                if (model.AccountBankCurrencyCode != "IDR")
+                {
+                    model.NominalValas = model.Nominal;
+                    model.Nominal = model.Nominal * model.CurrencyRate;
+                    model.TransactionNominal = model.Nominal;
+                }
+                else
+                {
+                    model.NominalValas = 0;
+                }
+
                 EntityExtension.FlagForUpdate(model, _IdentityService.Username, _UserAgent);
 
                 _DbSet.Update(model);
+
+                await _DbContext.SaveChangesAsync();
+
+                if (model.Status == "OUT")
+                {
+                    if (model.SourceType == "Pendanaan")
+                    {
+                        var reference = _DbContext.DailyBankTransactions.FirstOrDefault(entity => entity.Id == model.FinancingSourceReferenceId && entity.AccountBankId == model.DestinationBankId);
+                        if (reference != null)
+                        {
+                            reference.Nominal = model.TransactionNominal;
+                            reference.NominalValas = model.NominalValas;
+                            reference.CurrencyRate = model.CurrencyRate;
+
+                            model.Remark = FormatOutRemark(model);
+                            reference.Remark = FormatInRemark(reference, model);
+
+                            EntityExtension.FlagForUpdate(reference, _IdentityService.Username, _UserAgent);
+                            _DbContext.DailyBankTransactions.Update(reference);
+
+                            await _DbContext.SaveChangesAsync();
+                        }
+                        else
+                        {
+                            var references = _DbContext.DailyBankTransactions.Where(entity => entity.FinancingSourceReferenceId == model.Id).ToList();
+                            references = references.Select(element =>
+                            {
+                                EntityExtension.FlagForDelete(element, _IdentityService.Username, _UserAgent);
+                                return element;
+                            }).ToList();
+                            _DbContext.UpdateRange(references);
+                            await _DbContext.SaveChangesAsync();
+
+                            var inputModel = model.Clone();
+
+                            inputModel.Id = 0;
+                            inputModel.AccountBankAccountName = model.DestinationBankAccountName;
+                            inputModel.AccountBankAccountNumber = model.DestinationBankAccountNumber;
+                            inputModel.AccountBankCode = model.DestinationBankCode;
+                            inputModel.AccountBankCurrencyCode = model.DestinationBankCurrencyCode;
+                            inputModel.AccountBankCurrencyId = model.DestinationBankCurrencyId;
+                            inputModel.AccountBankCurrencySymbol = model.DestinationBankCurrencySymbol;
+                            inputModel.AccountBankId = model.DestinationBankId;
+                            inputModel.AccountBankName = model.DestinationBankName;
+                            inputModel.Status = "IN";
+                            inputModel.DestinationBankAccountName = "";
+                            inputModel.DestinationBankAccountNumber = "";
+                            inputModel.DestinationBankCode = "";
+                            inputModel.DestinationBankCurrencyCode = "";
+                            inputModel.DestinationBankCurrencyId = 0;
+                            inputModel.DestinationBankCurrencySymbol = "";
+                            inputModel.DestinationBankId = 0;
+                            inputModel.DestinationBankName = "";
+                            inputModel.Nominal = transactionNominal;
+                            inputModel.NominalValas = model.AccountBankCurrencyCode != "IDR" ? nominalValas : 0;
+                            inputModel.CurrencyRate = model.CurrencyRate;
+
+                            await CreateAsync(inputModel);
+
+                            model.FinancingSourceReferenceId = inputModel.Id;
+                            model.FinancingSourceReferenceNo = inputModel.ReferenceNo;
+                            inputModel.FinancingSourceReferenceId = model.Id;
+                            inputModel.FinancingSourceReferenceNo = model.ReferenceNo;
+
+
+                            model.Remark = FormatOutRemark(model);
+                            inputModel.Remark = FormatInRemark(inputModel, model);
+
+                            _DbContext.DailyBankTransactions.Update(model);
+                            _DbContext.DailyBankTransactions.Update(inputModel);
+                            await _DbContext.SaveChangesAsync();
+                        }
+
+                    }
+                }
+                else if (model.Status == "IN")
+                {
+                    if (model.FinancingSourceReferenceId > 0)
+                    {
+                        var reference = _DbContext.DailyBankTransactions.FirstOrDefault(entity => entity.FinancingSourceReferenceId == model.Id && entity.DestinationBankId == model.AccountBankId);
+                        if (reference != null)
+                        {
+                            reference.TransactionNominal = model.Nominal;
+                            reference.NominalValas = model.NominalValas;
+                            reference.CurrencyRate = model.CurrencyRate;
+
+                            EntityExtension.FlagForUpdate(reference, _IdentityService.Username, _UserAgent);
+                            _DbContext.DailyBankTransactions.Update(reference);
+                        }
+                        else
+                        {
+                            reference = _DbContext.DailyBankTransactions.FirstOrDefault(entity => entity.FinancingSourceReferenceId == model.Id);
+                            reference.DestinationBankAccountName = model.AccountBankAccountName;
+                            reference.DestinationBankAccountNumber = model.AccountBankAccountNumber;
+                            reference.DestinationBankCode = model.AccountBankCode;
+                            reference.DestinationBankCurrencyCode = model.AccountBankCurrencyCode;
+                            reference.DestinationBankCurrencyId = model.AccountBankCurrencyId;
+                            reference.DestinationBankCurrencySymbol = model.AccountBankCurrencySymbol;
+                            reference.DestinationBankId = model.AccountBankId;
+                            reference.DestinationBankName = model.AccountBankName;
+                            reference.TransactionNominal = model.Nominal;
+                            reference.NominalValas = model.NominalValas;
+                            reference.CurrencyRate = model.CurrencyRate;
+                            reference.Remark = FormatOutRemark(reference);
+                            EntityExtension.FlagForUpdate(reference, _IdentityService.Username, _UserAgent);
+                            _DbContext.DailyBankTransactions.Update(reference);
+                            await _DbContext.SaveChangesAsync();
+                        }
+                        await _DbContext.SaveChangesAsync();
+                    }
+                }
             }
             //UpdateRemainingBalance(model);
 
-            return await _DbContext.SaveChangesAsync();
+            return model.Id;
         }
 
         public async Task<int> DeleteByReferenceNoAsync(string referenceNo)
@@ -676,21 +1244,18 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
             model.Remark = FormatOutRemark(model);
             inputModel.Remark = FormatInRemark(inputModel, model);
 
-            using (var transaction = _DbContext.Database.BeginTransaction())
-            {
-                try
-                {
-                    result += await CreateAsync(model);
-                    result += await CreateAsync(inputModel);
-                    transaction.Commit();
-                }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                    throw ex;
-                }
+            result += await CreateAsync(model);
+            result += await CreateAsync(inputModel);
 
-            }
+            model.FinancingSourceReferenceId = inputModel.Id;
+            model.FinancingSourceReferenceNo = inputModel.ReferenceNo;
+            inputModel.FinancingSourceReferenceId = model.Id;
+            inputModel.FinancingSourceReferenceNo = model.ReferenceNo;
+
+            _DbContext.DailyBankTransactions.Update(model);
+            _DbContext.DailyBankTransactions.Update(inputModel);
+            await _DbContext.SaveChangesAsync();
+
             return result;
         }
 
@@ -805,7 +1370,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
                 }
             }
 
-            return Excel.CreateExcelWithTitle(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(result, "Saldo Harian"), new KeyValuePair<DataTable, string>(currency, "Saldo Harian Mata Uang") },
+            return Helpers.Excel.CreateExcelWithTitle(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(result, "Saldo Harian"), new KeyValuePair<DataTable, string>(currency, "Saldo Harian Mata Uang") },
                 new List<KeyValuePair<string, int>>() { new KeyValuePair<string, int>("Saldo Harian", index1), new KeyValuePair<string, int>("Saldo Harian Mata Uang", index2) },
                 title, dateFrom, dateTo, true);
         }
@@ -853,10 +1418,45 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
             return result.data;
         }
 
+        private async Task<List<AccountBank>> GetAccountBanks(List<int> accountBankIds)
+        {
+            var result = new List<AccountBank>();
+            foreach (var accountBankId in accountBankIds)
+            {
+                var http = _serviceProvider.GetService<IHttpClientService>();
+
+                string uri = APIEndpoint.Core + $"master/account-banks/{accountBankId}";
+                var response = await http.GetAsync(uri);
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                var jsonSerializationSetting = new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Ignore };
+
+                var responseObject = JsonConvert.DeserializeObject<APIDefaultResponse<AccountBank>>(responseString, jsonSerializationSetting);
+
+                if (responseObject.data != null)
+                    result.Add(responseObject.data);
+            }
+            return result;
+        }
+
         public async Task<int> Posting(List<int> ids)
         {
-            var models = _DbContext.DailyBankTransactions.Where(entity => ids.Contains(entity.Id)).ToList();
+            var models = _DbContext.DailyBankTransactions.Where(entity => ids.Contains(entity.Id) || ids.Contains(entity.FinancingSourceReferenceId)).ToList();
+            var dataAccountBankDestinantion = new List<AccountBank>();
+            dataAccountBankDestinantion = GetAccountBanks(models.Where(s => s.DestinationBankId>0).Select(s => s.DestinationBankId).Distinct().ToList()).GetAwaiter().GetResult();
+            var dataAccountBank = new List<AccountBank>();
+            dataAccountBank = GetAccountBanks(models.Where(s => s.AccountBankId > 0).Select(s => s.AccountBankId).Distinct().ToList()).GetAwaiter().GetResult();
+            //var itemModels = _DbContext.Dail.Where(entity => ids.Contains(entity.OthersExpenditureProofDocumentId)).ToList();
+            foreach (var model in models)
+            {
+                if (model.SourceType == "Pendanaan" && model.SourceFundingType=="Internal" && model.DestinationBankId > 0)
+                {
+                    AccountBank AccountBankDestinantion = dataAccountBankDestinantion.Single(a => a.Id == model.DestinationBankId);
+                    AccountBank accountBank = dataAccountBank.Single(a => a.Id == model.AccountBankId);
 
+                    await _autoJournalService.AutoJournalFromDailyBankTransaction(model, accountBank, AccountBankDestinantion);
+                }
+            }
             foreach (var model in models)
             {
                 model.IsPosted = true;
@@ -873,7 +1473,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
 
         public List<DailyBankTransactionModel> GeneratePdf(int bankId, int month, int year, int clientTimeZoneOffset)
         {
-            var Data = GetQuery(bankId, month, year, clientTimeZoneOffset).ToList();
+            var Data = GetQuery(bankId, month, year, clientTimeZoneOffset).OrderBy(element => element.Date).ToList();
 
             return Data;
         }
@@ -881,7 +1481,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
         public double GetBeforeBalance(int bankId, int month, int year, int clientTimeZoneOffset)
         {
             var BalanceByMonthAndYear = GetBalanceMonthAndYear(bankId, month, year, clientTimeZoneOffset);
-            var beforeBalance = BalanceByMonthAndYear.InitialBalance;
+            double beforeBalance = 0;
+            if (BalanceByMonthAndYear != null)
+            {
+                beforeBalance = BalanceByMonthAndYear.InitialBalance;
+            }
 
             return beforeBalance;
         }
@@ -889,7 +1493,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Dai
         public string GetDataAccountBank(int bankId)
         {
             var dataAccountBank = GetAccountBank(bankId).GetAwaiter().GetResult();
-            string bank = $"Bank {dataAccountBank.BankName} A/C : {dataAccountBank.AccountNumber}";
+            string bank = $"";
+
+            if (dataAccountBank != null)
+                bank = $"Bank {dataAccountBank.BankName} A/C : {dataAccountBank.AccountNumber}";
 
             return bank;
         }

@@ -5,7 +5,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDispo
 {
     public class GarmentDispositionPaymentReportDto
     {
-        public GarmentDispositionPaymentReportDto(int dispositionId, string dispositionNoteNo, DateTimeOffset dispositionNoteDate, DateTimeOffset dispositionNoteDueDate, string proformaNo, int supplierId, string supplierCode, string supplierName, int currencyId, string currencyCode, double currencyRate, double dPPAmount, double currencyDPPAmount, double vATAmount, double currencyVATAmount, double incomeTaxAmount, double currencyIncomeTaxAmount, double othersExpenditureAmount, double totalAmount, int categoryId, string categoryCode, string categoryName, GarmentPurchasingExpeditionPosition position, string sendToPurchasingRemark, DateTimeOffset? sendToVerificationDate, DateTimeOffset? verificationAcceptedDate, string verifiedBy, DateTimeOffset? cashierAcceptedDate, string bankExpenditureNoteDate, string bankExpenditureNoteNo, string paidAmount, int externalPurchaseOrderId, string externalPurchaseOrderNo, double dispositionQuantity, int deliveryOrderId, string deliveryOrderNo, double deliveryOrderQuantity, string paymentBillsNo, string billsNo, int customsNoteId, string customsNoteNo, DateTimeOffset? customsNoteDate, int unitReceiptNoteId, string unitReceiptNoteNo, int internalNoteId, string internalNoteNo, DateTimeOffset? internalNoteDate, string sendToVerificationBy, DateTimeOffset? verifiedDate)
+        public GarmentDispositionPaymentReportDto(int dispositionId, string dispositionNoteNo, DateTimeOffset dispositionNoteDate, DateTimeOffset dispositionNoteDueDate, string proformaNo, int supplierId, string supplierCode, string supplierName, int currencyId, string currencyCode, double currencyRate, double dPPAmount, double currencyDPPAmount, double vATAmount, double currencyVATAmount, double incomeTaxAmount, double currencyIncomeTaxAmount, double othersExpenditureAmount, double totalAmount, int categoryId, string categoryCode, string categoryName, GarmentPurchasingExpeditionPosition position, string sendToPurchasingRemark, DateTimeOffset? sendToVerificationDate, DateTimeOffset? verificationAcceptedDate, string verifiedBy, DateTimeOffset? cashierAcceptedDate, string bankExpenditureNoteDate, string bankExpenditureNoteNo, string paidAmount, int externalPurchaseOrderId, string externalPurchaseOrderNo, double dispositionQuantity, int deliveryOrderId, string deliveryOrderNo, double deliveryOrderQuantity, string paymentBillsNo, string billsNo, int customsNoteId, string customsNoteNo, DateTimeOffset? customsNoteDate, int unitReceiptNoteId, string unitReceiptNoteNo, int internalNoteId, string internalNoteNo, DateTimeOffset? internalNoteDate, string sendToVerificationBy, DateTimeOffset? verifiedDate, string remark, string purchaseBy)
         {
             DispositionId = dispositionId;
             DispositionNoteNo = dispositionNoteNo;
@@ -57,6 +57,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDispo
             InternalNoteNo = internalNoteNo;
             InternalNoteDate = internalNoteDate;
             SendToVerificationby = sendToVerificationBy;
+            Remark = remark;
+            PurchaseBy = purchaseBy;
         }
 
         public int DispositionId { get; private set; }
@@ -86,6 +88,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDispo
         public string SendToPurchasingRemark { get; private set; }
         public DateTimeOffset? SendToVerificationDate { get; private set; }
         public DateTimeOffset? VerificationAcceptedDate { get; private set; }
+        public string Remark { get; set; }
         public DateTimeOffset? VerifiedDate { get; private set; }
         public string VerifiedBy { get; private set; }
         public DateTimeOffset? CashierAcceptedDate { get; private set; }
@@ -109,5 +112,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDispo
         public string InternalNoteNo { get; private set; }
         public DateTimeOffset? InternalNoteDate { get; private set; }
         public string SendToVerificationby { get; private set; }
+        public string PurchaseBy { get; private set; }
     }
 }

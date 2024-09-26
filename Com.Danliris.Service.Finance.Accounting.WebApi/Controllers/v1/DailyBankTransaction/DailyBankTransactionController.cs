@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.DailyBankTransaction;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.DailyBankTransaction.Excel;
 using Com.Danliris.Service.Finance.Accounting.Lib.Helpers;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates;
@@ -94,7 +95,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.DailyBan
         }
 
         [HttpGet("mutation/report/download")]
-        public IActionResult GetReportXls(int bankId, int month, int year)
+        public IActionResult GetReportXls(int bankId, int month, int year,string currencyCode)
         {
             try
             {
@@ -231,6 +232,105 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.DailyBan
                     new ResultFormatter(ApiVersion, Utilities.General.INTERNAL_ERROR_STATUS_CODE, e.Message)
                     .Fail();
                 return StatusCode(Utilities.General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("report")]
+        public IActionResult GetReportAll(string referenceNo, int accountBankId, string division, DateTimeOffset? startDate, DateTimeOffset? endDate, int page = 0, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                int clientTimeZoneOffset = int.Parse(Request.Headers["x-timezone-offset"].First());
+                VerifyUser();
+                ReadResponse<DailyBankTransactionModel> Result = Service.GetReportAll(referenceNo,accountBankId,division,startDate,endDate,page,size,order,select,keyword,filter);
+
+                return Ok(new
+                {
+                    apiVersion = "1.0.0",
+                    data = Result.Data,
+                    message = Utilities.General.OK_MESSAGE,
+                    statusCode = Utilities.General.OK_STATUS_CODE
+                });
+            }
+            catch (Exception e)
+            {
+                var result = new ResultFormatter(ApiVersion, Utilities.General.INTERNAL_ERROR_STATUS_CODE, e.Message + "\n" + e.StackTrace);
+                return StatusCode(Utilities.General.INTERNAL_ERROR_STATUS_CODE, result);
+            }
+        }
+
+        [HttpGet("loader")]
+        public IActionResult GetLoader( string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                int clientTimeZoneOffset = int.Parse(Request.Headers["x-timezone-offset"].First());
+                ReadResponse<DailyBankTransactionModel> Result = Service.GetLoader(keyword, filter);
+
+                return Ok(new
+                {
+                    apiVersion = "1.0.0",
+                    data = Result.Data,
+                    message = Utilities.General.OK_MESSAGE,
+                    statusCode = Utilities.General.OK_STATUS_CODE
+                });
+            }
+            catch (Exception e)
+            {
+                var result = new ResultFormatter(ApiVersion, Utilities.General.INTERNAL_ERROR_STATUS_CODE, e.Message + "\n" + e.StackTrace);
+                return StatusCode(Utilities.General.INTERNAL_ERROR_STATUS_CODE, result);
+            }
+        }
+
+        [HttpGet("report/xls-in")]
+        public IActionResult GetReportAllXlsIn(string referenceNo, int accountBankId,string accountBankName, string division, DateTimeOffset? startDate, DateTimeOffset? endDate, int page = 0, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                int clientTimeZoneOffset = int.Parse(Request.Headers["x-timezone-offset"].First());
+                VerifyUser();
+                ReadResponse<DailyBankTransactionModel> Result = Service.GetReportAll(referenceNo, accountBankId, division, startDate, endDate, page, size, order, select, keyword, filter);
+               
+                var filename = "Laporan Bank Harian Masuk";
+
+                var xls = AutoDailyBankTransactionExcelGenerator.CreateIn(filename, Result.Data,referenceNo, accountBankId, accountBankName,division, startDate, endDate, clientTimeZoneOffset);
+
+                var xlsInBytes = xls.ToArray();
+
+                var file = File(xlsInBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
+                return file;
+                
+            }
+            catch (Exception e)
+            {
+                var result = new ResultFormatter(ApiVersion, Utilities.General.INTERNAL_ERROR_STATUS_CODE, e.Message + "\n" + e.StackTrace);
+                return StatusCode(Utilities.General.INTERNAL_ERROR_STATUS_CODE, result);
+            }
+        }
+
+        [HttpGet("report/xls-out")]
+        public IActionResult GetReportAllXlsOut(string referenceNo, int accountBankId, string accountBankName, string division, DateTimeOffset? startDate, DateTimeOffset? endDate, int page = 0, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")] List<string> select = null, string keyword = null, string filter = "{}")
+        {
+            try
+            {
+                int clientTimeZoneOffset = int.Parse(Request.Headers["x-timezone-offset"].First());
+                VerifyUser();
+                ReadResponse<DailyBankTransactionModel> Result = Service.GetReportAll(referenceNo, accountBankId, division, startDate, endDate, page, size, order, select, keyword, filter);
+
+                var filename = "Laporan Bank Harian Keluar";
+
+                var xls = AutoDailyBankTransactionExcelGenerator.CreateOut(filename, Result.Data, referenceNo, accountBankId, accountBankName, division, startDate, endDate, clientTimeZoneOffset);
+
+                var xlsInBytes = xls.ToArray();
+
+                var file = File(xlsInBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
+                return file;
+
+            }
+            catch (Exception e)
+            {
+                var result = new ResultFormatter(ApiVersion, Utilities.General.INTERNAL_ERROR_STATUS_CODE, e.Message + "\n" + e.StackTrace);
+                return StatusCode(Utilities.General.INTERNAL_ERROR_STATUS_CODE, result);
             }
         }
     }

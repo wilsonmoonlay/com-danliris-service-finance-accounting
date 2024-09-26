@@ -135,7 +135,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.DailyBankTran
             //mocks.Mapper.Setup(f => f.Map<List<DailyBankTransactionViewModel>>(It.IsAny<List<DailyBankTransactionModel>>())).Returns(ViewModels);
 
             var controller = GetController(mocks);
-            IActionResult response = controller.GetReportXls(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>());
+            IActionResult response = controller.GetReportXls(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>());
             Assert.NotNull(response);
         }
 
@@ -147,7 +147,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.DailyBankTran
             //mocks.Mapper.Setup(f => f.Map<List<DailyBankTransactionViewModel>>(It.IsAny<List<DailyBankTransactionModel>>())).Returns(ViewModels);
 
             var controller = GetController(mocks);
-            IActionResult response = controller.GetReportXls(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>());
+            IActionResult response = controller.GetReportXls(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>());
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
 
@@ -207,7 +207,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.DailyBankTran
             var mocks = GetMocks();
             mocks.Service.Setup(f => f.GenerateExcelDailyBalance(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>())).Returns(new MemoryStream());
 
-            var response = GetController(mocks).GetReportXls(1, 1, 2018);
+            var response = GetController(mocks).GetReportXls(1, 1, 2018, "Code");
             Assert.NotNull(response);
         }
 
@@ -217,7 +217,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.DailyBankTran
             var mocks = GetMocks();
             mocks.Service.Setup(f => f.GenerateExcelDailyBalance(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>())).Returns(new MemoryStream());
 
-            var response = GetController(mocks).GetReportXls(1, 1, 2018);
+            var response = GetController(mocks).GetReportXls(1, 1, 2018, "Code");
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
 
@@ -227,7 +227,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.DailyBankTran
             var mocks = GetMocks();
             mocks.Service.Setup(f => f.GenerateExcelDailyBalance(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>())).Returns(new MemoryStream());
 
-            var response = GetController(mocks).GetReportXls(1, 8, 2030);
+            var response = GetController(mocks).GetReportXls(1, 8, 2030, "Code");
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
 
@@ -311,6 +311,117 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.DailyBankTran
             var response = GetController(mocks).GetReportPdf(1, 1, 2018);
 
             //Assert
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void GetReportAll_Return_Ok()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReportAll(It.IsAny<string>(), It.IsAny<int>(),It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new ReadResponse<DailyBankTransactionModel>(new List<DailyBankTransactionModel>(),1,new Dictionary<string, string>(),new List<string>()));
+
+            var response = GetController(mocks).GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>());
+            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void GetReportAll_Return_ThrowException()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Throws(new Exception("test failed"));
+
+            var response = GetController(mocks).GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>());
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
+        [Fact]
+        public void GetLoader_Return_Ok()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetLoader(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new ReadResponse<DailyBankTransactionModel>(new List<DailyBankTransactionModel>(), 1, new Dictionary<string, string>(), new List<string>()));
+
+            var response = GetController(mocks).GetLoader(It.IsAny<string>(), It.IsAny<string>());
+            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void GetLoader_Return_ThrowException()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetLoader(It.IsAny<string>(), It.IsAny<string>()))
+                .Throws(new Exception("test failed"));
+
+            var response = GetController(mocks).GetLoader(It.IsAny<string>(), It.IsAny<string>());
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
+        [Fact]
+        public void GetReportAllXlsIn_Return_Ok()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new ReadResponse<DailyBankTransactionModel>(new List<DailyBankTransactionModel> { new DailyBankTransactionModel() { AccountBankAccountName="test"} }, 1, new Dictionary<string, string>(), new List<string>()));
+
+            var response = GetController(mocks).GetReportAllXlsIn(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>());
+            //Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void GetReportAllXlsIn_ifDateNull_Return_Ok()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Nullable<DateTimeOffset>>(), It.IsAny<Nullable<DateTimeOffset>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new ReadResponse<DailyBankTransactionModel>(new List<DailyBankTransactionModel> { new DailyBankTransactionModel() { AccountBankAccountName = "test" } }, 1, new Dictionary<string, string>(), new List<string>()));
+
+            var response = GetController(mocks).GetReportAllXlsIn(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), null, null, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>());
+            //Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void GetReportAllXlsIn_Return_ThrowException()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Throws(new Exception("test failed"));
+
+            var response = GetController(mocks).GetReportAllXlsIn(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>());
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
+        [Fact]
+        public void GetReportAllXlsOut_Return_Ok()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new ReadResponse<DailyBankTransactionModel>(new List<DailyBankTransactionModel> { new DailyBankTransactionModel() { AccountBankAccountName = "test" } }, 1, new Dictionary<string, string>(), new List<string>()));
+
+            var response = GetController(mocks).GetReportAllXlsOut(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>());
+            //Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void GetReportAllXlsOut_ifDateNull_Return_Ok()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Nullable<DateTimeOffset>>(), It.IsAny<Nullable<DateTimeOffset>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new ReadResponse<DailyBankTransactionModel>(new List<DailyBankTransactionModel> { new DailyBankTransactionModel() { AccountBankAccountName = "test" } }, 1, new Dictionary<string, string>(), new List<string>()));
+
+            var response = GetController(mocks).GetReportAllXlsOut(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), null, null, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>());
+            //Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void GetReportAllXlsOut_Return_ThrowException()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReportAll(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Throws(new Exception("test failed"));
+
+            var response = GetController(mocks).GetReportAllXlsOut(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>());
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
     }

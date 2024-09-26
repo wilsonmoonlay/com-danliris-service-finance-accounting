@@ -128,14 +128,217 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.DataUtils.PaymentDisposit
                 }
             };
         }
-        
-        public PaymentDispositionNotePostDto GetNewPostDto()
+
+        public PaymentDispositionNoteViewModel GetNewDataViewModel()
         {
-                return new PaymentDispositionNotePostDto
+            var datas = Task.Run(() => ExpeditionData.GetTestData()).Result;
+            long nowTicks = DateTimeOffset.Now.Ticks;
+            string nowTicksA = $"{nowTicks}a";
+            string nowTicksB = $"{nowTicks}b";
+            return new PaymentDispositionNoteViewModel()
+            {
+                PaymentDispositionNo = "PaymentDispositionNo",
+                Supplier = new Lib.ViewModels.NewIntegrationViewModel.SupplierViewModel
+                {
+                    Code = "Code",
+                    Name = "Name"
+                },
+                AccountBank = new Lib.ViewModels.NewIntegrationViewModel.AccountBankViewModel
+                {
+                    BankName = "BankName",
+                    AccountNumber = "AccountNumber",
+                    Currency = new Lib.ViewModels.NewIntegrationViewModel.CurrencyViewModel
+                    {
+                        Code = "Code"
+                    }
+                },
+                CurrencyCode = "CurrencyCode",
+                CurrencyRate = 1,
+                CurrencyId = 1,
+                BankAccountCOA = nowTicksA,
+                TransactionType = "Any",
+                BGCheckNumber = nowTicksA,
+                Amount = 1000,
+                PaymentDate = DateTimeOffset.Now,
+
+                Items = new List<PaymentDispositionNoteItemViewModel>
+                {
+                    new PaymentDispositionNoteItemViewModel
+                    {
+                        purchasingDispositionExpeditionId = 1,
+                        SupplierPayment = 1000,
+                        AmountPaid = 1000,
+                        dispositionNo = "dispositionNo",
+                        category = new Lib.ViewModels.IntegrationViewModel.CategoryViewModel
+                        {
+                            name = "name"
+                        },
+                        division = new Lib.ViewModels.IntegrationViewModel.DivisionViewModel
+                        {
+                            name = "name"
+                        },
+                        Details= new List<PaymentDispositionNoteDetailViewModel>
+                        {
+                            new PaymentDispositionNoteDetailViewModel
+                            {
+                                price = 1000,
+                                unit = new Lib.ViewModels.IntegrationViewModel.UnitViewModel
+                                {
+                                    code = "code"
+                                }
+                            }
+                        }
+
+                    },
+                    new PaymentDispositionNoteItemViewModel
+                    {
+                        purchasingDispositionExpeditionId = 1,
+                        SupplierPayment = 1000,
+                        AmountPaid = 1000,
+                        dispositionNo = "dispositionNo",
+                        category = new Lib.ViewModels.IntegrationViewModel.CategoryViewModel
+                        {
+                            name = "name"
+                        },
+                        division = new Lib.ViewModels.IntegrationViewModel.DivisionViewModel
+                        {
+                            name = "name"
+                        },
+                        Details= new List<PaymentDispositionNoteDetailViewModel>
+                        {
+                            new PaymentDispositionNoteDetailViewModel
+                            {
+                                price = 1000,
+                                unit = new Lib.ViewModels.IntegrationViewModel.UnitViewModel
+                                {
+                                    code = "code"
+                                }
+                            },
+                            new PaymentDispositionNoteDetailViewModel
+                            {
+                                price = 1000,
+                                unit = new Lib.ViewModels.IntegrationViewModel.UnitViewModel
+                                {
+                                    code = "code2"
+                                }
+                            }
+                        }
+
+                    }
+                }
+            };
+        }
+
+        public PaymentDispositionNoteViewModel GetNewDataViewModelIDRNONIDR()
+        {
+            var datas = Task.Run(() => ExpeditionData.GetTestData()).Result;
+            long nowTicks = DateTimeOffset.Now.Ticks;
+            string nowTicksA = $"{nowTicks}a";
+            string nowTicksB = $"{nowTicks}b";
+            return new PaymentDispositionNoteViewModel()
+            {
+                PaymentDispositionNo = "PaymentDispositionNo",
+                Supplier = new Lib.ViewModels.NewIntegrationViewModel.SupplierViewModel
+                {
+                    Code = "Code",
+                    Name = "Name"
+                },
+                AccountBank = new Lib.ViewModels.NewIntegrationViewModel.AccountBankViewModel
+                {
+                    BankName = "BankName",
+                    AccountNumber = "AccountNumber",
+                    Currency = new Lib.ViewModels.NewIntegrationViewModel.CurrencyViewModel
+                    {
+                        Code = "IDR"
+                    }
+                },
+                CurrencyCode = "CurrencyCode",
+                CurrencyRate = 1,
+                CurrencyId = 1,
+                BankAccountCOA = nowTicksA,
+                TransactionType = "Any",
+                BGCheckNumber = nowTicksA,
+                Amount = 1000,
+                PaymentDate = DateTimeOffset.Now,
+
+                Items = new List<PaymentDispositionNoteItemViewModel>
+                {
+                    new PaymentDispositionNoteItemViewModel
+                    {
+                        purchasingDispositionExpeditionId = 1,
+                        SupplierPayment = 1000,
+                        AmountPaid = 1000,
+                        dispositionNo = "dispositionNo",
+                        category = new Lib.ViewModels.IntegrationViewModel.CategoryViewModel
+                        {
+                            name = "name"
+                        },
+                        division = new Lib.ViewModels.IntegrationViewModel.DivisionViewModel
+                        {
+                            name = "name"
+                        },
+                        Details= new List<PaymentDispositionNoteDetailViewModel>
+                        {
+                            new PaymentDispositionNoteDetailViewModel
+                            {
+                                price = 1000,
+                                unit = new Lib.ViewModels.IntegrationViewModel.UnitViewModel
+                                {
+                                    code = "code"
+                                }
+                            }
+                        }
+
+                    },
+                    new PaymentDispositionNoteItemViewModel
+                    {
+                        purchasingDispositionExpeditionId = 1,
+                        SupplierPayment = 1000,
+                        AmountPaid = 1000,
+                        dispositionNo = "dispositionNo",
+                        category = new Lib.ViewModels.IntegrationViewModel.CategoryViewModel
+                        {
+                            name = "name"
+                        },
+                        division = new Lib.ViewModels.IntegrationViewModel.DivisionViewModel
+                        {
+                            name = "name"
+                        },
+                        Details= new List<PaymentDispositionNoteDetailViewModel>
+                        {
+                            new PaymentDispositionNoteDetailViewModel
+                            {
+                                price = 1000,
+                                unit = new Lib.ViewModels.IntegrationViewModel.UnitViewModel
+                                {
+                                    code = "code"
+                                }
+                            },
+                            new PaymentDispositionNoteDetailViewModel
+                            {
+                                price = 1000,
+                                unit = new Lib.ViewModels.IntegrationViewModel.UnitViewModel
+                                {
+                                    code = "code2"
+                                }
+                            }
+                        }
+
+                    }
+                }
+            };
+        }
+
+        public async Task<PaymentDispositionNotePostDto> GetNewPostDto()
+        {
+            PaymentDispositionNoteModel model = GetNewData();
+            await Service.CreateAsync(model);
+            var read = await Service.ReadByIdAsync((int)model.Id);
+            return new PaymentDispositionNotePostDto
                 {
                     ListIds = new List<PaymentDispositionNotePostIdDto>
                     {
-                        new PaymentDispositionNotePostIdDto{ Id = 1 }
+                        new PaymentDispositionNotePostIdDto{ Id = read.Id }
                     }
                 };            
         }
@@ -145,6 +348,22 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.DataUtils.PaymentDisposit
             PaymentDispositionNoteModel model = GetNewData();
             await Service.CreateAsync(model);
             return await Service.ReadByIdAsync(model.Id);
+        }
+
+        public async Task<PaymentDispositionNoteViewModel> GetPDFData()
+        {
+            PaymentDispositionNoteModel model = GetNewData();
+            PaymentDispositionNoteViewModel viewModel = GetNewDataViewModel();
+            await Service.CreateAsync(model);
+            return viewModel;
+        }
+
+        public async Task<PaymentDispositionNoteViewModel> GetPDFDataIDRNONIDR()
+        {
+            PaymentDispositionNoteModel model = GetNewData();
+            PaymentDispositionNoteViewModel viewModel = GetNewDataViewModelIDRNONIDR();
+            await Service.CreateAsync(model);
+            return viewModel;
         }
     }
 }

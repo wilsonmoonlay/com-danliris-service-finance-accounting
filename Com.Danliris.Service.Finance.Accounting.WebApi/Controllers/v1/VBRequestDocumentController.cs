@@ -460,5 +460,26 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
                 return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, result);
             }
         }
+
+        [HttpGet("purchasing/{id}")]
+        public IActionResult GetVBForPurchasing([FromRoute] int id)
+        {
+            try
+            {
+                var model = _service.GetVBForPurchasing(id);
+
+                Dictionary<string, object> Result =
+                        new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE)
+                        .Ok(null, model);
+                return Ok(Result);
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
     }
 }

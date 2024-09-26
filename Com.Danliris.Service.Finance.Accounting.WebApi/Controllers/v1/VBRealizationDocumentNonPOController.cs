@@ -186,7 +186,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
                     return BadRequest(Result);
                 }
 
-                await _service.UpdateAsync(id, form);
+                 await _service.UpdateAsync(id, form);
 
                 return NoContent();
             }

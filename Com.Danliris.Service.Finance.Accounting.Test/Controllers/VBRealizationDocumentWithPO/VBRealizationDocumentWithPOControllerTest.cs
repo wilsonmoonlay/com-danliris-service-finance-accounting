@@ -121,6 +121,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.VBRealization
                                     Name="Name",
                                     Rate=1
                                 },
+                                VatTax=new VatTaxDto()
+                                {
+                                    Id="1",
+                                    Rate="10"
+                                },
                                 IncomeTaxBy="Supplier",
                                 UseIncomeTax=true,
                                 UseVat=true
@@ -214,6 +219,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.VBRealization
                             {
                                 Name="Name",
                                 Rate=1
+                            },
+                            VatTax=new VatTaxViewModel()
+                            {
+                                Id="1",
+                                Rate="10"
                             },
                             DateDetail=DateTimeOffset.Now,
                             IncomeTaxBy="supplier",

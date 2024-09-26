@@ -541,13 +541,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.PurchasingDispos
             postedModel.DispositionNo = httpClientFromPurchasingDisposition.GetPurchasingDispositionViewModel().DispositionNo;
             await service.CreateAsync(postedModel);
             var model = await service.ReadByIdAsync(postedModel.Id);
-            var reportResponse = await service.GetReportAsync(1, 25, "{}", "{}", null, null, 7);
+            var reportResponse = await service.GetReportAsync(1, 25, "{}", "{}", null, null,null,null,null,null,null, 7);
             Assert.NotNull(reportResponse.Data);
-            reportResponse = await service.GetReportAsync(1, 25, "{}", "{}", DateTimeOffset.UtcNow.AddDays(-1), null, 7);
+            reportResponse = await service.GetReportAsync(1, 25, "{}", "{}", DateTimeOffset.UtcNow.AddDays(-1), null, DateTimeOffset.UtcNow.AddDays(-1), null, null,null,null, 7);
             Assert.NotNull(reportResponse.Data);
-            reportResponse = await service.GetReportAsync(1, 25, "{}", "{}", null, DateTimeOffset.UtcNow.AddDays(1), 7);
+            reportResponse = await service.GetReportAsync(1, 25, "{}", "{}", null, DateTimeOffset.UtcNow.AddDays(1), null, DateTimeOffset.UtcNow.AddDays(1), null,null,null, 7);
             Assert.NotNull(reportResponse.Data);
-            reportResponse = await service.GetReportAsync(1, 25, "{}", "{}", DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), 7);
+            reportResponse = await service.GetReportAsync(1, 25, "{}", "{}", DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), null,null,null, 7);
             Assert.NotNull(reportResponse.Data);
         }
 
@@ -555,7 +555,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.PurchasingDispos
         public void Should_Fail_Get_Report()
         {
             var service = new PurchasingDispositionExpeditionService(GetServiceProviderWrongHttpClient().Object, _dbContext(GetCurrentMethod()));
-            Assert.ThrowsAsync<Exception>(() => service.GetReportAsync(1, 25, "{}", "{}", DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), 7));
+            Assert.ThrowsAsync<Exception>(() => service.GetReportAsync(1, 25, "{}", "{}", DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), null,null,null, 7));
 
         }
 
@@ -617,11 +617,133 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.PurchasingDispos
             postedModel.DispositionNo = httpClientFromPurchasingDisposition.GetPurchasingDispositionViewModel().DispositionNo;
             await service.CreateAsync(postedModel);
             var model = await service.ReadByIdAsync(postedModel.Id);
-            var reportResponse = await service.GenerateExcelAsync(1, 25, "{}", "{}", null, DateTimeOffset.UtcNow.AddDays(2), 7);
+            var reportResponse = await service.GenerateExcelAsync(1, 25, "{}", "{}", null, DateTimeOffset.UtcNow.AddDays(2),null,null,null, null, null, 7);
             Assert.NotNull(reportResponse);
         }
+		[Fact]
+		public async Task Should_Success_Generate_ExcelIsPaid()
+		{
+			var serviceProvider = new Mock<IServiceProvider>();
+			var vm = new HttpClientFromPurchasingDisposition().GetPurchasingDispositionViewModel();
+			string vmJson = JsonConvert.SerializeObject(vm);
+			PurchasingDispositionResponseViewModel response = new PurchasingDispositionResponseViewModel()
+			{
+				apiVersion = "1.0.0",
+				data = new List<PurchasingDispositionViewModel>() { vm },
+				info = new APIInfo()
+				{
+					count = 1,
+					order = new
+					{
+						LastModifiedUtc = "asc"
+					},
+					page = 1,
+					size = 25,
+					total = 1,
+				},
+				message = "OK",
+				statusCode = "200"
+			};
+			string responseJson = JsonConvert.SerializeObject(response);
+			//serviceProvider
+			//    .Setup(x => x.GetService(typeof(IHttpClientService)))
+			//    .Returns(new HttpClientFromPurchasingDisposition());
 
-        [Fact]
+			serviceProvider
+				.Setup(x => x.GetService(typeof(IIdentityService)))
+				.Returns(new IdentityService() { Token = "Token", Username = "Test", TimezoneOffset = 7 });
+			var httpClientService = new Mock<IHttpClientService>();
+			httpClientService
+				.Setup(x => x.GetAsync(It.Is<string>(s => s.Contains("purchasing-dispositions"))))
+				.ReturnsAsync(new HttpResponseMessage() { Content = new StringContent(responseJson, Encoding.UTF8, "application/json"), StatusCode = HttpStatusCode.OK });
+			httpClientService
+				.Setup(x => x.GetAsync(It.Is<string>(s => s.Contains("external-purchase-orders"))))
+				.ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(new ExternalPurchaseOrderDataUtil().GetResultFormatterOkString()) });
+			httpClientService
+				.Setup(x => x.GetAsync(It.Is<string>(s => s.Contains("unit-payment-orders"))))
+				.ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(new UnitPaymentOrderDataUtil().GetResultFormatterOkString()) });
+			httpClientService
+				.Setup(x => x.PutAsync(It.Is<string>(s => s.Contains("purchasing-dispositions/update")), It.IsAny<HttpContent>()))
+				.ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+
+			serviceProvider
+				.Setup(x => x.GetService(typeof(IHttpClientService)))
+				.Returns(httpClientService.Object);
+
+			PurchasingDispositionExpeditionService service = new PurchasingDispositionExpeditionService(serviceProvider.Object, _dbContext(GetCurrentMethod()));
+
+			var postedModel = _dataUtil(service).GetNewData();
+			HttpClientFromPurchasingDisposition httpClientFromPurchasingDisposition = new HttpClientFromPurchasingDisposition();
+			postedModel.DispositionNo = httpClientFromPurchasingDisposition.GetPurchasingDispositionViewModel().DispositionNo;
+			await service.CreateAsync(postedModel);
+			var model = await service.ReadByIdAsync(postedModel.Id);
+			var reportResponse = await service.GenerateExcelAsync(1, 25, "{}", "{}", null, DateTimeOffset.UtcNow.AddDays(2), null, null, "no", "SUDAH ADA","SUDAH DIBAYAR", 7);
+			Assert.NotNull(reportResponse);
+		}
+		[Fact]
+		public async Task Should_Success_Generate_ExcelNotPaid()
+		{
+			var serviceProvider = new Mock<IServiceProvider>();
+			var vm = new HttpClientFromPurchasingDisposition().GetPurchasingDispositionViewModel();
+			string vmJson = JsonConvert.SerializeObject(vm);
+			PurchasingDispositionResponseViewModel response = new PurchasingDispositionResponseViewModel()
+			{
+				apiVersion = "1.0.0",
+				data = new List<PurchasingDispositionViewModel>() { vm },
+				info = new APIInfo()
+				{
+					count = 1,
+					order = new
+					{
+						LastModifiedUtc = "asc"
+					},
+					page = 1,
+					size = 25,
+					total = 1,
+				},
+				message = "OK",
+				statusCode = "200"
+			};
+			string responseJson = JsonConvert.SerializeObject(response);
+			//serviceProvider
+			//    .Setup(x => x.GetService(typeof(IHttpClientService)))
+			//    .Returns(new HttpClientFromPurchasingDisposition());
+
+			serviceProvider
+				.Setup(x => x.GetService(typeof(IIdentityService)))
+				.Returns(new IdentityService() { Token = "Token", Username = "Test", TimezoneOffset = 7 });
+			var httpClientService = new Mock<IHttpClientService>();
+			httpClientService
+				.Setup(x => x.GetAsync(It.Is<string>(s => s.Contains("purchasing-dispositions"))))
+				.ReturnsAsync(new HttpResponseMessage() { Content = new StringContent(responseJson, Encoding.UTF8, "application/json"), StatusCode = HttpStatusCode.OK });
+			httpClientService
+				.Setup(x => x.GetAsync(It.Is<string>(s => s.Contains("external-purchase-orders"))))
+				.ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(new ExternalPurchaseOrderDataUtil().GetResultFormatterOkString()) });
+			httpClientService
+				.Setup(x => x.GetAsync(It.Is<string>(s => s.Contains("unit-payment-orders"))))
+				.ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(new UnitPaymentOrderDataUtil().GetResultFormatterOkString()) });
+			httpClientService
+				.Setup(x => x.PutAsync(It.Is<string>(s => s.Contains("purchasing-dispositions/update")), It.IsAny<HttpContent>()))
+				.ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+
+			serviceProvider
+				.Setup(x => x.GetService(typeof(IHttpClientService)))
+				.Returns(httpClientService.Object);
+
+			PurchasingDispositionExpeditionService service = new PurchasingDispositionExpeditionService(serviceProvider.Object, _dbContext(GetCurrentMethod()));
+
+			var postedModel = _dataUtil(service).GetNewData();
+			HttpClientFromPurchasingDisposition httpClientFromPurchasingDisposition = new HttpClientFromPurchasingDisposition();
+			postedModel.DispositionNo = httpClientFromPurchasingDisposition.GetPurchasingDispositionViewModel().DispositionNo;
+			await service.CreateAsync(postedModel);
+			var model = await service.ReadByIdAsync(postedModel.Id);
+			var reportResponse = await service.GenerateExcelAsync(1, 25, "{}", "{}", null, DateTimeOffset.UtcNow.AddDays(2), null, null, "no", "BELUM ADA", "BELUM DIBAYAR", 7);
+			Assert.NotNull(reportResponse);
+		}
+
+		[Fact]
         public void Should_Success_Generate_Empty_Excel()
         {
             var serviceProvider = new Mock<IServiceProvider>();
@@ -672,8 +794,18 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.PurchasingDispos
 
             PurchasingDispositionExpeditionService service = new PurchasingDispositionExpeditionService(serviceProvider.Object, _dbContext(GetCurrentMethod()));
 
-            var reportResponse = service.GenerateExcelAsync(1, 25, "{}", "{}", null, null, 7);
+            var reportResponse = service.GenerateExcelAsync(1, 25, "{}", "{}", null, null,null,null,null,null,null, 7);
             Assert.NotNull(reportResponse);
         }
-    }
+
+		[Fact]
+		public async Task Should_Success_GetBankExpenditure_Data()
+		{
+			PurchasingDispositionExpeditionService service = new PurchasingDispositionExpeditionService(GetServiceProvider().Object, _dbContext(GetCurrentMethod()));
+			var data = await _dataUtil(service).GetTestData();
+			var Response = service.ReadBankExpenditureNoteNo(1, 25, "{}", null, null, "{}");
+			Assert.NotEmpty(Response.Data);
+		}
+
+	}
 }

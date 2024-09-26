@@ -63,14 +63,16 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument
             string dealUOMUnit,
             double conversion,
             double price,
-            bool useVat
+            bool useVat,
+            string vatId,
+            string vatRate
             )
         {
             VBRequestDocumentId = vbRequestDocumentId;
             VBRequestDocumentEPODetailId = vbRequestDocumentEPODetailId;
             UnitId = unitId;
-            UnitName= unitName;
-            UnitCode= unitCode;
+            UnitName = unitName;
+            UnitCode = unitCode;
             DivisionId = divisionId;
             DivisionName = divisionName;
             DivisionCode = divisionCode;
@@ -92,6 +94,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument
             Conversion = conversion;
             Price = price;
             UseVat = useVat;
+            VatId = vatId;
+            VatRate = vatRate;
 
         }
 
@@ -134,6 +138,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument
         public double Conversion { get; private set; }
         public double Price { get; private set; }
         public bool UseVat { get; private set; }
+
+        public string VatId { get; private set; }
+        public string VatRate { get; private set; }
 
         public int VBDocumentLayoutOrder { get; private set; }
 

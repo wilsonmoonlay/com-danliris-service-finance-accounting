@@ -1,4 +1,7 @@
-﻿using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.JournalTransaction;
+﻿using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.DPPVATBankExpenditureNote;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.DailyBankTransaction;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.JournalTransaction;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.JournalTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.Helpers;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument;
@@ -29,7 +32,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
         private readonly IIdentityService _identityService;
         private readonly IAutoJournalService _autoJournalTransactionService;
         private readonly IJournalTransactionService _journalTransactionService;
+        private readonly IAutoDailyBankTransactionService _dailyBankTransactionService;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IDPPVATBankExpenditureNoteService _dppVatBankExpenditureNoteService;
 
         public VBRequestDocumentService(FinanceDbContext dbContext, IServiceProvider serviceProvider)
         {
@@ -37,6 +42,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
             _identityService = serviceProvider.GetService<IIdentityService>();
             _autoJournalTransactionService = serviceProvider.GetService<IAutoJournalService>();
             _journalTransactionService = serviceProvider.GetService<IJournalTransactionService>();
+            _dailyBankTransactionService = serviceProvider.GetService<IAutoDailyBankTransactionService>();
+            _dppVatBankExpenditureNoteService = serviceProvider.GetService<IDPPVATBankExpenditureNoteService>();
             _serviceProvider = serviceProvider;
         }
 
@@ -45,7 +52,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
             var now = form.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset);
             var year = now.ToString("yy");
             var month = now.ToString("MM");
-
 
             //var unit = model.UnitCode.ToString().Split(" - ");
 
@@ -125,7 +131,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
             try
             {
                 var unitCode = GetDocumentUnitCode(form.SuppliantUnit.Division.Name.ToUpper(), form.IsInklaring);
-                var existingData = _dbContext.VBRequestDocuments.Where(a => a.Date.AddHours(_identityService.TimezoneOffset).Month == form.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Month && a.DocumentNo.StartsWith(unitCode)).OrderByDescending(s => s.Index).FirstOrDefault();
+                var existingData = _dbContext.VBRequestDocuments.Where(a => a.Date.AddHours(_identityService.TimezoneOffset).Month == form.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Month && a.Date.AddHours(_identityService.TimezoneOffset).Year == form.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Year && a.DocumentNo.StartsWith(unitCode)).OrderByDescending(s => s.Id).FirstOrDefault();
                 var documentNo = GetDocumentNo(form, existingData);
                 var model = new VBRequestDocumentModel(
                     documentNo.Item1,
@@ -203,7 +209,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
         public int CreateWithPO(VBRequestDocumentWithPOFormDto form)
         {
             var unitCode = GetDocumentUnitCode(form.SuppliantUnit.Division.Name.ToUpper(), form.IsInklaring);
-            var existingData = _dbContext.VBRequestDocuments.Where(a => a.Date.AddHours(_identityService.TimezoneOffset).Month == form.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Month && a.DocumentNo.StartsWith(unitCode)).OrderByDescending(s => s.Index).FirstOrDefault();
+            var existingData = _dbContext.VBRequestDocuments.Where(a => a.Date.AddHours(_identityService.TimezoneOffset).Month == form.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Month && a.DocumentNo.StartsWith(unitCode) && a.Date.AddHours(_identityService.TimezoneOffset).Year == form.Date.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Year).OrderByDescending(s => s.Id).FirstOrDefault();
             var documentNo = GetDocumentNo(form, existingData);
 
             var model = new VBRequestDocumentModel(
@@ -291,7 +297,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
                     element.DealUOM.Unit,
                     element.Conversion.GetValueOrDefault(),
                     element.Price.GetValueOrDefault(),
-                    element.UseVat
+                    element.UseVat,
+                    element.VatTax.Id,
+                    element.VatTax.Rate
                     );
 
                 EntityExtension.FlagForCreate(result, _identityService.Username, UserAgent);
@@ -564,6 +572,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
                                     Name = entity.IncomeTaxName,
                                     Rate = entity.IncomeTaxRate
                                 },
+                                VatTax = new VatTaxDto()
+                                { 
+                                    Id = entity.VatId,
+                                    Rate = entity.VatRate, 
+                                },
                                 IncomeTaxBy = entity.IncomeTaxBy,
                                 Unit = new UnitDto()
                                 {
@@ -743,9 +756,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
             var vbDocuments = _dbContext.VBRequestDocuments.Where(s => data.Ids.Contains(s.Id));
 
             var vbRequestIdJournals = new List<int>();
+            var vbRequestsList = new List<ApprovalVBAutoJournalDto>();
             foreach (var item in vbDocuments)
             {
                 item.SetIsApproved(_identityService.Username, UserAgent);
+                item.SetBank(data.Bank, _identityService.Username, UserAgent);
                 //if (data.IsApproved)
                 //{
                 //    item.SetApprovedBy(_identityService.Username, _identityService.Username, UserAgent);
@@ -753,11 +768,16 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
                 //}
 
                 if (item.IsInklaring)
+                {
                     vbRequestIdJournals.Add(item.Id);
+                    var bankDocumentNo = await _dppVatBankExpenditureNoteService.GetDocumentNo("K",data.Bank.BankCode,_identityService.Username,DateTime.UtcNow);
+                    item.SetBankDocumentNo(bankDocumentNo,_identityService.Username,UserAgent);
+                    vbRequestsList.Add(new ApprovalVBAutoJournalDto { VbRequestDocument = item, Bank = data.Bank });
+                }
 
                 //if (item.Type == VBType.WithPO)
                 //{
-                    
+
                 //    //var epoIds = _dbContext.VBRequestDocumentEPODetails.Where(entity => entity.VBRequestDocumentId == item.Id).Select(entity => (long)entity.EPOId).ToList();
                 //    //var autoJournalEPOUri = "vb-request-po-external/auto-journal-epo";
 
@@ -776,7 +796,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
             var result = await _dbContext.SaveChangesAsync();
 
             await _autoJournalTransactionService.AutoJournalInklaring(vbRequestIdJournals, data.Bank);
-
+            await _dailyBankTransactionService.AutoCreateVbApproval(vbRequestsList);
             return result;
         }
 
@@ -808,6 +828,34 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDoc
             }
 
             return _dbContext.SaveChangesAsync();
+        }
+
+        public bool GetVBForPurchasing(int id)
+        {
+            bool Response = true;
+
+            var model = _dbContext.VBRequestDocumentEPODetails.Where(s => s.EPOId == id && s.IsDeleted == false).ToList();
+
+            if (model.Count > 0)
+            {
+                foreach (var item in model)
+                {
+                    var VBmodel = _dbContext.VBRequestDocuments.Where(s => s.Id == item.VBRequestDocumentId).ToList();
+
+                    Response = !VBmodel.Count.Equals(0);
+
+                    if (Response == true)
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Response = false;
+            }
+
+            return Response;
         }
     }
 }

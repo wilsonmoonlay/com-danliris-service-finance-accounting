@@ -66,7 +66,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.OthersExpenditur
 
                 return Task.FromResult(result);
             }
-            else if (url.Contains("master/garment-currencies/single-by-code-date"))
+            else if (url.Contains("master/bi-currencies/single-by-code-date"))
             {
                 var defaultresponse = new APIDefaultResponse<GarmentCurrency>()
                 {

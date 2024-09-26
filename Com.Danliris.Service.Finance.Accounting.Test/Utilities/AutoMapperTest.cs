@@ -2,6 +2,8 @@
 using Com.Danliris.Service.Finance.Accounting.Lib;
 using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.DownPayment;
+using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.GarmentFinance.BankCashReceipt;
+using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.GarmentFinance.BankCashReceiptDetail;
 using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.GarmentInvoicePayment;
 using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.JournalTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.LockTransaction;
@@ -13,6 +15,8 @@ using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.Realization
 using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.VBNonPORequest;
 using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.VBWithPORequest;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.DailyBankTransaction;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.BankCashReceipt;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.BankCashReceiptDetail;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentInvoicePayment;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.JournalTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.LockTransaction;
@@ -21,6 +25,8 @@ using Com.Danliris.Service.Finance.Accounting.Lib.Models.PaymentDispositionNote;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.PurchasingDispositionExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.DownPayment;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentFinance.BankCashReceipt;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentFinance.BankCashReceiptDetail;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentInvoicePaymentViewModel;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.JournalTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.LockTransaction;
@@ -152,6 +158,24 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Utilities
             var mapper = new MapperConfiguration(configuration => configuration.AddProfile<GarmentInvoicePaymentProfile>()).CreateMapper();
             var model = new GarmentInvoicePaymentModel();
             var vm = mapper.Map<GarmentInvoicePaymentViewModel>(model);
+            Assert.True(true);
+        }
+
+        [Fact]
+        public void Should_Success_Map_Garment_Finance_BankCashReceipt()
+        {
+            var mapper = new MapperConfiguration(configuration => configuration.AddProfile<BankCashReceiptProfile>()).CreateMapper();
+            var model = new BankCashReceiptModel();
+            var vm = mapper.Map<BankCashReceiptViewModel>(model);
+            Assert.True(true);
+        }
+
+        [Fact]
+        public void Should_Success_Map_Garment_Finance_BankCashReceiptDetail()
+        {
+            var mapper = new MapperConfiguration(configuration => configuration.AddProfile<BankCashReceiptDetailProfile>()).CreateMapper();
+            var model = new BankCashReceiptDetailModel();
+            var vm = mapper.Map<BankCashReceiptDetailViewModel>(model);
             Assert.True(true);
         }
     }

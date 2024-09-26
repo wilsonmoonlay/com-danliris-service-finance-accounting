@@ -6,6 +6,7 @@ using Com.Danliris.Service.Finance.Accounting.Lib.Services.IdentityService;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.ValidateService;
 using Com.Danliris.Service.Finance.Accounting.Lib.Utilities;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentInvoicePurchasingDisposition;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentInvoicePurchasingDisposition.Report;
 using Com.Danliris.Service.Finance.Accounting.WebApi.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -248,5 +249,88 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.GarmentI
                 return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
             }
         }
-    }
+		[HttpGet("loader")]
+		public IActionResult GetLoader(string keyword = null, string filter = "{}")
+		{
+			try
+			{
+				int clientTimeZoneOffset = int.Parse(Request.Headers["x-timezone-offset"].First());
+				ReadResponse<GarmentInvoicePurchasingDispositionNoVM> Result = Service.GetLoader(keyword, filter);
+
+				return Ok(new
+				{
+					apiVersion = "1.0.0",
+					data = Result.Data,
+					message = Utilities.General.OK_MESSAGE,
+					statusCode = Utilities.General.OK_STATUS_CODE
+				});
+			}
+			catch (Exception e)
+			{
+				var result = new ResultFormatter(ApiVersion, Utilities.General.INTERNAL_ERROR_STATUS_CODE, e.Message + "\n" + e.StackTrace);
+				return StatusCode(Utilities.General.INTERNAL_ERROR_STATUS_CODE, result);
+			}
+		}
+		[HttpGet("monitoring")]
+		public IActionResult GetMonitoring([FromQuery] string invoiceNo, [FromQuery] string dispositionNo, [FromQuery] DateTimeOffset startDate, [FromQuery] DateTimeOffset endDate)
+		{
+			try
+			{
+				VerifyUser();
+				int offSet = Convert.ToInt32(Request.Headers["x-timezone-offset"]);
+				//int offSet = 7;
+				var data = Service.GetMonitoring(invoiceNo, dispositionNo,startDate,endDate, offSet);
+
+				return Ok(new
+				{
+					apiVersion = ApiVersion,
+					data,
+					message = General.OK_MESSAGE,
+					statusCode = General.OK_STATUS_CODE
+				});
+			}
+			catch (Exception e)
+			{
+				Dictionary<string, object> Result =
+				   new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+				   .Fail();
+				return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+			}
+		}
+
+		[HttpGet("download")]
+		public async Task<IActionResult> GetReportAllXls([FromQuery] string invoiceNo, [FromQuery] string dispositionNo, [FromQuery] DateTimeOffset startDate, [FromQuery] DateTimeOffset endDate)
+		{
+			try
+			{
+				try
+				{
+					VerifyUser();
+					byte[] xlsInBytes;
+					//int offSet = Convert.ToInt32(Request.Headers["x-timezone-offset"]);
+					var xls = await Service.DownloadReportXls(invoiceNo, dispositionNo, startDate, endDate);
+ 
+					string filename = String.Format("Laporan Bukti Pembayaran Disposisi Garment {0}.xlsx", DateTime.UtcNow.ToString("ddMMyyyy"));
+
+					xlsInBytes = xls.ToArray();
+					var file = File(xlsInBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
+					return file;
+				}
+				catch (Exception e)
+				{
+					Dictionary<string, object> Result =
+						new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+						.Fail();
+					return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+				}
+
+			}
+			catch (Exception e)
+			{
+				var result = new ResultFormatter(ApiVersion, Utilities.General.INTERNAL_ERROR_STATUS_CODE, e.Message + "\n" + e.StackTrace);
+				return StatusCode(Utilities.General.INTERNAL_ERROR_STATUS_CODE, result);
+			}
+		}
+
+	}
 }

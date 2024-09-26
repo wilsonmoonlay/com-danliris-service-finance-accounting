@@ -122,9 +122,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Gar
             exist.BuyerCode = model.BuyerCode;
             exist.BuyerName = model.BuyerName;
             exist.BGNo = model.BGNo;
-            exist.CurrencyCode = model.CurrencyCode;
-            exist.CurrencyId = model.CurrencyId;
-            exist.CurrencyRate = model.CurrencyRate;
             exist.Remark = model.Remark;
 
             foreach (var item in exist.Items)

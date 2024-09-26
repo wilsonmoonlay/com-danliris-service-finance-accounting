@@ -340,9 +340,20 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
             return new ReadResponse<JournalTransactionModel>(list, TotalData, OrderDictionary, new List<string>());
         }
 
-        public List<JournalTransactionModel> ReadUnPostedTransactionsByPeriod(int month, int year)
+        public List<JournalTransactionModel> ReadUnPostedTransactionsByPeriod(int month, int year, string referenceNo, string referenceType, bool isVB)
         {
-            var result = _DbSet.Where(w => w.Date.Month.Equals(month) && w.Date.Year.Equals(year) && w.Status.Equals("DRAFT")).ToList();
+            var query = _DbSet.Where(w => w.Date.AddHours(_IdentityService.TimezoneOffset).Month.Equals(month) && w.Date.AddHours(_IdentityService.TimezoneOffset).Year.Equals(year) && w.Status.Equals("DRAFT"));
+
+            if (isVB)
+                query = query.Where(entity => entity.Description.Contains("VB"));
+
+            if (!string.IsNullOrWhiteSpace(referenceNo))
+                query = query.Where(entity => entity.ReferenceNo.Contains(referenceNo));
+
+            if (!string.IsNullOrWhiteSpace(referenceType))
+                query = query.Where(entity => entity.Description.Contains(referenceType));
+
+            var result = query.ToList();
             var transactionIds = result.Select(s => s.Id).ToList();
 
             var transactionItems = (from transactionItem in _ItemDbSet
@@ -376,7 +387,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
                 transaction.Items = transactionItems.Where(w => w.JournalTransactionId.Equals(transaction.Id)).ToList();
             }
 
-            return result;
+
+
+            return result.OrderBy(element => element.Date).ToList();
         }
 
         public async Task<int> UpdateAsync(int id, JournalTransactionModel model)
@@ -423,7 +436,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
         {
             _DbContext.ChartsOfAccounts.Load();
             IQueryable<JournalTransactionItemModel> query = _DbContext.JournalTransactionItems
-                .Include(x => x.JournalTransaction);
+                .Include(x => x.JournalTransaction)
+                .Where(x => x.JournalTransaction.Status == JournalTransactionStatus.Posted);
 
             if (dateFrom == null && dateTo == null)
             {
@@ -462,7 +476,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
                     Description = item.JournalTransaction.Description,
                     ReferenceNo = item.JournalTransaction.ReferenceNo,
                     IsReverser = item.JournalTransaction.IsReverser,
-                    IsReversed = item.JournalTransaction.IsReversed
+                    IsReversed = item.JournalTransaction.IsReversed,
+                    HeaderRemark = item.JournalTransaction.Remark
                 };
 
                 if (item.COA != null)
@@ -483,12 +498,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
 
             List<JournalTransactionReportHeaderViewModel> result = new List<JournalTransactionReportHeaderViewModel>();
 
-            foreach (var item in queries.Item1.GroupBy(x => new { x.Date, x.ReferenceNo, x.Description }))
+            foreach (var item in queries.Item1.GroupBy(x => new { x.Date, x.ReferenceNo, x.Description, x.Remark }))
             {
                 result.Add(new JournalTransactionReportHeaderViewModel()
                 {
                     Description = item.Key.Description,
                     ReferenceNo = item.Key.ReferenceNo,
+                    HeaderRemark = item.Key.Remark,
                     Items = item.ToList()
                 });
             }
@@ -508,6 +524,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
             dt.Columns.Add(new DataColumn() { ColumnName = "", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Deskripsi", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "No Referensi", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Remark", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Date", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "Nama Akun", DataType = typeof(string) });
             dt.Columns.Add(new DataColumn() { ColumnName = "No Akun", DataType = typeof(string) });
@@ -517,17 +534,17 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
 
             if (data.Item1.Count == 0)
             {
-                dt.Rows.Add("", "", "", "", "", "", "", "", "");
+                dt.Rows.Add("", "", "", "", "", "", "", "", "", "");
             }
             else
             {
                 foreach (var item in data.Item1)
                 {
-                    dt.Rows.Add(item.IsReverser ? "Pembalik" : item.IsReversed ? "Dibalik" : "", string.IsNullOrEmpty(item.Description) ? "-" : item.Description, string.IsNullOrEmpty(item.ReferenceNo) ? "-" : item.ReferenceNo, item.Date.AddHours(offSet).ToString("dd MMM yyyy"), string.IsNullOrEmpty(item.COAName) ? "-" : item.COAName, string.IsNullOrEmpty(item.COACode) ? "-" : item.COACode,
+                    dt.Rows.Add(item.IsReverser ? "Pembalik" : item.IsReversed ? "Dibalik" : "", string.IsNullOrEmpty(item.Description) ? "-" : item.Description, string.IsNullOrEmpty(item.ReferenceNo) ? "-" : item.ReferenceNo, string.IsNullOrEmpty(item.HeaderRemark) ? "-" : item.HeaderRemark, item.Date.AddHours(offSet).ToString("dd MMM yyyy"), string.IsNullOrEmpty(item.COAName) ? "-" : item.COAName, string.IsNullOrEmpty(item.COACode) ? "-" : item.COACode,
                         string.IsNullOrEmpty(item.Remark) ? "-" : item.Remark, item.Debit.HasValue ? item.Debit.Value.ToString("#,##0.###0") : "0", item.Credit.HasValue ? item.Credit.Value.ToString("#,##0.###0") : "0");
 
                 }
-                dt.Rows.Add("", "", "", "", "", "", "TOTAL", data.Item2.ToString("#,##0.###0"), data.Item3.ToString("#,##0.###0"));
+                dt.Rows.Add("", "", "", "", "", "", "", "TOTAL", data.Item2.ToString("#,##0.###0"), data.Item3.ToString("#,##0.###0"));
             }
 
             return Excel.CreateExcelJournalTransaction(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(dt, "Jurnal Transaksi") }, dateFrom.GetValueOrDefault(), dateTo.GetValueOrDefault(), true);
@@ -564,7 +581,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
 
                 var reversingJournalTransaction = new JournalTransactionModel()
                 {
-                    Date = DateTimeOffset.Now,
+                    Date = transactionToReverse.Date,
                     Items = reversingItems,
                     ReferenceNo = transactionToReverse.ReferenceNo,
                     Status = transactionToReverse.Status,
@@ -1152,6 +1169,24 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Jou
 
             }
 
+        }
+
+        public List<string> GetAllReferenceNo(string keyword, bool isVB)
+        {
+            var query = _DbContext.JournalTransactions.AsQueryable();
+            if (isVB)
+                query = query.Where(entity => entity.Description.Contains("VB"));
+
+            return query.Select(entity => entity.ReferenceNo).Distinct().Where(entity => !string.IsNullOrWhiteSpace(entity) && entity.Contains(keyword)).ToList();
+        }
+
+        public List<string> GetAllReferenceType(string keyword, bool isVB)
+        {
+            var query = _DbContext.JournalTransactions.AsQueryable();
+            if (isVB)
+                query = query.Where(entity => entity.Description.Contains("VB"));
+
+            return query.Select(entity => entity.Description).Distinct().Where(entity => !string.IsNullOrWhiteSpace(entity) && entity.Contains(keyword)).ToList();
         }
     }
 

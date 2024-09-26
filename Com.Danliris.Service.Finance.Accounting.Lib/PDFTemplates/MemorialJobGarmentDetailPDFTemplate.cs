@@ -167,8 +167,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
 
             var number = 1;
             var totalJmlBayarIDR = 0;
-            var totalJmlBeli = 0;
-            var totalSelisih = 0;
+            var totalJmlBeli = 0.0;
+            var totalSelisih = 0.0;
 
             foreach (var item in data)
             {
@@ -208,11 +208,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
                 cellItemRight.Phrase = new Phrase(item.MemoIdrAmount.ToString("#,##0.#0"), _header3Font);
                 table.AddCell(cellItemRight);
 
-                int buyTotal = item.MemoIdrAmount * item.PurchasingRate;
+                var buyTotal = item.MemoIdrAmount * item.PurchasingRate;
                 cellItemRight.Phrase = new Phrase(buyTotal.ToString("#,##0.#0"), _header3Font);
                 table.AddCell(cellItemRight);
 
-                int differencTotal = item.MemoIdrAmount - buyTotal;
+                var differencTotal = item.MemoIdrAmount - buyTotal;
 
                 if(differencTotal == 0)
                 {

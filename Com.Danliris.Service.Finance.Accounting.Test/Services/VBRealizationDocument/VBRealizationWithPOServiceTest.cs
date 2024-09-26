@@ -206,6 +206,24 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.VBRealizationDoc
         }
 
         [Fact]
+        public void ReadByUser_Return_Success()
+        {
+            //Setup
+            FinanceDbContext _dbContext = GetDbContext(GetCurrentMethod());
+            Mock<IServiceProvider> serviceProviderMock = GetServiceProvider();
+
+            var vBRealizationWithPOService = new VBRealizationWithPOService(_dbContext, serviceProviderMock.Object);
+            var vBRealizationDocumenData = _dataUtil(vBRealizationWithPOService).GetTestData_TanpaNomorVB();
+
+            //Act
+            ReadResponse<VBRealizationDocumentModel> result = vBRealizationWithPOService.ReadByUser(1, 1, "{}", new List<string>(), "", "{}");
+
+            //Assert
+            Assert.NotNull(result);
+
+        }
+
+        [Fact]
         public void Update_Return_Success()
         {
             //Setup

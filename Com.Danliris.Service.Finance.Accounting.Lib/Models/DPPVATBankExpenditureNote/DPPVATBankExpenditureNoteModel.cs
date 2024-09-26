@@ -61,7 +61,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.DPPVATBankExpenditu
         public DateTimeOffset Date { get; private set; }
         public bool IsPosted { get; private set; }
 
-        public void UpdateData(double amount, int supplierId, bool isImportSupplier, string supplierName, string bgCheckNo, DateTimeOffset date)
+        public void UpdateData(double amount, int supplierId, bool isImportSupplier, string supplierName, string bgCheckNo, DateTimeOffset date, double currencyRate)
         {
             Amount = amount;
             SupplierId = supplierId;
@@ -69,6 +69,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.DPPVATBankExpenditu
             IsImportSupplier = isImportSupplier;
             BGCheckNo = bgCheckNo;
             Date = date;
+            CurrencyRate = currencyRate;
         }
 
         public void Posted()

@@ -2,11 +2,13 @@
 using Com.Danliris.Service.Finance.Accounting.Lib;
 using Com.Danliris.Service.Finance.Accounting.Lib.AutoMapperProfiles.Memo;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.Memo;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.MemoGarmentPurchasing;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.Memo;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.HttpClientService;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.IdentityService;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.Memo;
 using Com.Danliris.Service.Finance.Accounting.Test.DataUtils.Memo;
+using Com.Danliris.Service.Finance.Accounting.Test.DataUtils.MemoGarmentPurchasing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Moq;
@@ -336,6 +338,20 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.Memo
             var data = await dataUtil.GetCreatedSalesInvoiceData();
 
             var result = await service.DeleteAsync(data.Id);
+
+            Assert.NotEqual(0, result);
+        }
+
+        [Fact]
+        public async Task Should_Success_Create_Memo_Garment_Purchasing()
+        {
+            var dbContext = GetDbContext(GetCurrentMethod());
+            var serviceProviderMock = GetServiceProviderMock();
+            var service = new MemoGarmentPurchasingService(dbContext, serviceProviderMock.Object);
+            var dataUtil = new MemoGarmentPurchasingDataUtil(service);
+            var data = dataUtil.GetModelToCreate();
+
+            var result = await service.CreateAsync(data);
 
             Assert.NotEqual(0, result);
         }

@@ -9,8 +9,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.MemoGarmentPurchasi
         public int COAId { get; set; }
         public string COANo { get; set; }
         public string COAName { get; set; }
-        public int DebitNominal { get; set; }
-        public int CreditNominal { get; set; }
+        public double DebitNominal { get; set; }
+        public double CreditNominal { get; set; }
 
         [ForeignKey("MemoId")]
         public virtual MemoGarmentPurchasingModel MemoGarmentPurchasing { get; set; }

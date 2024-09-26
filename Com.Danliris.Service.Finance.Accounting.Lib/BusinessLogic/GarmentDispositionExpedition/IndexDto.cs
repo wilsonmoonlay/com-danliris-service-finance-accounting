@@ -118,6 +118,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDispo
             ProformaNo = entity.ProformaNo;
             Amount = entity.DPPAmount + VATAmount - IncomeTaxAmount;
             Category = entity.Category;
+            VerifiedDate = entity.VerifiedDate;
+            
         }
 
         public int Id { get; private set; }
@@ -156,5 +158,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDispo
         public double Amount { get; set; }
         public double TotalPaidPaymentBefore { get; set; }
         public double DiffTotalPaidPayment { get; set; }
+        public DateTimeOffset? VerifiedDate { get; set; }
     }
 }

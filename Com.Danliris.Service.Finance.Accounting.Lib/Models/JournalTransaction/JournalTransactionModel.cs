@@ -18,6 +18,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.JournalTransaction
         public bool IsReversed { get; set; }
         [MaxLength(25)]
         public string Status { get; set; }
+        public string Remark { get; set; }
         public ICollection<JournalTransactionItemModel> Items { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

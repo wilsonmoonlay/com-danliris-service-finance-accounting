@@ -8,7 +8,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDispo
 {
     public interface IGarmentDispositionPaymentReportService
     {
-        Task<List<GarmentDispositionPaymentReportDto>> GetReport(int dispositionId, int supplierId, GarmentPurchasingExpeditionPosition position, string purchasingStaff, DateTimeOffset startDate, DateTimeOffset endDate);
+        Task<List<GarmentDispositionPaymentReportDto>> GetReport(int dispositionId, int epoId, int supplierId, GarmentPurchasingExpeditionPosition position, string purchasingStaff, DateTimeOffset startDate, DateTimeOffset endDate);
         List<PositionOption> GetPositionOptions();
     }
 }

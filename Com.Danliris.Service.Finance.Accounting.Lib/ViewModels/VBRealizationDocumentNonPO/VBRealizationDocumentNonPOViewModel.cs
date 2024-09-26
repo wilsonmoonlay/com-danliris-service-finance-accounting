@@ -1,7 +1,10 @@
-﻿using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizationDocumentExpedition;
+﻿using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.VBRealizationDocumentNonPO;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.VBRealizationDocumentNonPO;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizationDocumentExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDocument;
 using Com.Danliris.Service.Finance.Accounting.Lib.Utilities;
 using Com.Danliris.Service.Finance.Accounting.Lib.Utilities.BaseClass;
+using MongoDB.Bson.IO;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -41,6 +44,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.VBRealizationDo
 
         public IEnumerable<VBRealizationDocumentNonPOExpenditureItemViewModel> Items { get; set; }
         public IEnumerable<VBRealizationDocumentNonPOUnitCostViewModel> UnitCosts { get; set; }
+        public string InvoiceNo { get; set; }
         public string Remark { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -128,7 +132,19 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.VBRealizationDo
                             }
                         }
 
-                            
+
+                    }
+
+                    if (item.IsGetPPn)
+                    {
+                        if (!IsInklaring)
+                        {
+                            if (item.VatTax == null || string.IsNullOrWhiteSpace(item.VatTax.Id))
+                            {
+                                CountItemsError++;
+                                ItemsError += "'VatTax': 'Rate PPn Harus DiIsi!', ";
+                            }
+                        }
                     }
 
                     if (item.Amount <= 0)
@@ -197,7 +213,19 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.VBRealizationDo
             if (UnitCosts.Sum(s => s.Amount) != Items.Sum(s => s.Total))
                 yield return new ValidationResult("Nominal beban unit dan total nota harus sama!", new List<string> { "CompareNominal" });
 
-
+            if (InvoiceNo == null)
+            {
+                yield return new ValidationResult("Invoice harus diisi", new List<string> { "InvoiceNo" });
+            }
+            else
+            {
+                IVBRealizationDocumentNonPOService vbService = (IVBRealizationDocumentNonPOService)validationContext.GetService(typeof(IVBRealizationDocumentNonPOService));
+                var TotalInvoiceNo = vbService.CheckInvoiceNo(Id, InvoiceNo);
+                if (TotalInvoiceNo > 0)
+                {
+                    yield return new ValidationResult("Nomor Invoice sudah digunakan sebelumnya", new List<string> { "InvoiceNo" });
+                }
+            }
         }
     }
 }

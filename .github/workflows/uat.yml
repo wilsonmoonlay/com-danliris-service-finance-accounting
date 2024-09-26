@@ -1,0 +1,31 @@
+name: Unit Test UAT
+
+on:
+  push:
+    branches: [ uat ]
+  pull_request:
+    branches: [ uat ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 2.2
+    - uses: actions/checkout@v2
+    - name: Install libgdiplus
+      run: sudo apt-get install libgdiplus
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test Com.Danliris.Service.Finance.Accounting.Test/Com.Danliris.Service.Finance.Accounting.Test.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=lcov --no-restore --verbosity normal
+    - name: Upload Coverage
+      uses: codecov/codecov-action@v1
+      with:
+       file: ./Com.Danliris.Service.Finance.Accounting.Test/coverage.info

@@ -31,6 +31,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.PaymentDispositionN
         public int UomId { get; set; }
         [MaxLength(255)]
         public string UomUnit { get; set; }
+        public double PaidPrice { get; set; }
 
     }
 }

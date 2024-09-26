@@ -204,14 +204,14 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.Masters
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
 
-        [Fact]
-        public void Get_COA_Header_Enum()
-        {
-            var mocks = GetMocks();
+        //[Fact]
+        //public void Get_COA_Header_Enum()
+        //{
+        //    var mocks = GetMocks();
 
-            var response = GetController(mocks).GetCOAHeaderSubheader();
-            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
-        }
+        //    var response = GetController(mocks).GetCOAHeaderSubheader();
+        //    Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+        //}
 
         [Fact]
         public async Task GetEmptyNameCoa_WithoutException_ReturnOK()
@@ -306,6 +306,17 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.Masters
 
             int statusCode = GetStatusCode(response);
             Assert.Equal((int)HttpStatusCode.NoContent, statusCode);
+        }
+
+        [Fact]
+        public void GetCOAHeaderSubheader_WithoutException_ReturnOK()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetAll()).Returns(new List<COAModel>());
+            mocks.Mapper.Setup(f => f.Map<List<COAViewModel>>(It.IsAny<List<COAModel>>())).Returns(ViewModels);
+
+            var response = GetController(mocks).GetCOAHeaderSubheader();
+            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
         }
     }
 }

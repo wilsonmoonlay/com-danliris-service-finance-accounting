@@ -44,6 +44,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
         public double RemainBalance { get; set; }
         public double CurrencyRemainBalance { get; private set; }
         public DateTimeOffset ArrivalDate { get; private set; }
+        //public string MemoNo { get; set; }
+        //public int MemoId { get; set; }
+        //public int MemoDetailId { get; set; }
+        //public double MemoAmount { get; set; }
+        //public double PaymentRate { get; set; }
 
         public GarmentDebtBalanceCardDto(Models.GarmentDebtBalance.GarmentDebtBalanceModel model)
         {
@@ -68,7 +73,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
             IsPayVAT = model.IsPayVAT;
             IsPayIncomeTax = model.IsPayIncomeTax;
             BankExpenditureNoteId = model.BankExpenditureNoteId;
-            BankExpenditureNoteNo = model.BankExpenditureNoteNo;
+            BankExpenditureNoteNo = string.IsNullOrEmpty(model.BankExpenditureNoteNo)? model.MemoNo : model.BankExpenditureNoteNo;
             BankExpenditureNoteInvoiceAmount = model.BankExpenditureNoteInvoiceAmount;
             InternalNoteId = model.InternalNoteId;
             InternalNoteNo = model.InternalNoteNo;

@@ -19,6 +19,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Model.VBRealizationDocume
                 {
                     Name = "Name",
                     Rate = 1
+                },
+                VatTax = new VatTaxViewModel()
+                {
+                    Id = "1",
+                    Rate = "10"
                 }
             };
 
@@ -29,6 +34,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Model.VBRealizationDocume
             model.SetUseVat(true, "user", "userAgent");
             model.SetUseIncomeTax(true, "user", "userAgent");
             model.SetIncomeTax(1,2, "newIncomeTaxName", "user", "userAgent");
+            model.SetVatTax("1", "newVatTax", "user", "userAgent");
             model.SetIncomeTaxBy("newIncomeTaxBy", "user", "userAgent");
             
         }

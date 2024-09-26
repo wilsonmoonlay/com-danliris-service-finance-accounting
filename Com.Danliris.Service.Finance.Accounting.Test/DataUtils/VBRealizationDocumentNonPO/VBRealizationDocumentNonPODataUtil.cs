@@ -123,7 +123,12 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.DataUtils.VBRealizationDo
                         {
                             Name="Name",
                             Rate=1
-                        }
+                        },
+                        VatTax=new VatTaxViewModel()
+                        {
+                        Id="1",
+                        Rate="10"
+                        },
                     }
                 }
             };

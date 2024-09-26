@@ -138,7 +138,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
             var query = GetDebtBalanceCardWithBeforeBalanceAndTotalDto(supplierId, month, year);
             var result = new GarmentDebtBalanceIndexDto
             {
-                Data = query,
+                Data = query.OrderBy(element => element.SupplierName).ToList(),
                 Count = query.Count,
                 Order = new List<string>(),
                 Selected = new List<string>()
@@ -150,7 +150,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
             var query = GetDebtBalanceCardWithBeforeBalanceAndSaldoAkhirDto(supplierId, month, year);
             var result = new GarmentDebtBalanceIndexDto
             {
-                Data = query,
+                Data = query.OrderBy(element => element.SupplierName).ToList(),
                 Count = query.Count,
                 Order = new List<string>(),
                 Selected = new List<string>()
@@ -518,6 +518,25 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
 
             result.AddRange(totalResult);
             return result;
+        }
+
+        //public int UpdateFromMemo(int memoDetailId, string memoNo, double memoAmount, double paymentRate)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        public int UpdateFromMemo(int deliveryOrderId, int memoDetailId, string memoNo, double memoAmount, double paymentRate)
+        {
+            var balance = _dbContext.GarmentDebtBalances.FirstOrDefault(entity => entity.GarmentDeliveryOrderId == deliveryOrderId);
+
+            if (balance != null)
+            {
+                balance.SetMemo(memoDetailId, memoNo, memoAmount, paymentRate);
+                EntityExtension.FlagForUpdate(balance, _identityService.Username, UserAgent);
+                _dbContext.GarmentDebtBalances.Update(balance);
+            }
+
+            return _dbContext.SaveChanges();
         }
     }
 }

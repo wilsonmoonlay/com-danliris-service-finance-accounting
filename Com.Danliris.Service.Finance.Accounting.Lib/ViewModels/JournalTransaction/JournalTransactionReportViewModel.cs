@@ -13,6 +13,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.JournalTransact
         public string COACode { get; set; }
 
         public string Remark { get; set; }
+        public string HeaderRemark { get; set; }
 
         public decimal? Debit { get; set; }
 

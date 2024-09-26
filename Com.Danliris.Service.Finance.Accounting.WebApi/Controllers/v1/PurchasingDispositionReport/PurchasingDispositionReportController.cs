@@ -43,14 +43,14 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.Purchasi
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetReportAsync(DateTime? dateFrom = null, DateTime? dateTo = null, int page = 1, int size = 25, string order = "{}", string filter = "{}")
+        public async Task<IActionResult> GetReportAsync(string SPBStatus, string PaymentStatus, string bankExpenditureNoteNo,DateTimeOffset? dateFromPayment = null, DateTimeOffset? dateToPayment = null,DateTime ? dateFrom = null, DateTime? dateTo = null, int page = 1, int size = 25, string order = "{}", string filter = "{}")
         {
             try
             {
                 VerifyUser();
                 int offSet = Convert.ToInt32(Request.Headers["x-timezone-offset"]);
                 //int offSet = 7;
-                var data = await Service.GetReportAsync(page, size, order, filter, dateFrom, dateTo, offSet);
+                var data = await Service.GetReportAsync(page, size, order, filter, dateFrom, dateTo, dateFromPayment,dateToPayment, bankExpenditureNoteNo,SPBStatus,PaymentStatus, offSet);
 
                 return Ok(new
                 {
@@ -77,14 +77,14 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.Purchasi
         }
 
         [HttpGet("downloads/xls")]
-        public async Task<IActionResult> GetXlsAsync(string filter = "{}", DateTime? dateFrom = null, DateTime? dateTo = null)
+        public async Task<IActionResult> GetXlsAsync(string SPBStatus,string PaymentStatus, string bankExpenditureNoteNo, DateTime? dateFromPayment = null, DateTime? dateToPayment = null, string filter = "{}", DateTime? dateFrom = null, DateTime? dateTo = null)
         {
             try
             {
                 VerifyUser();
                 byte[] xlsInBytes;
                 int offSet = Convert.ToInt32(Request.Headers["x-timezone-offset"]);
-                var xls = await Service.GenerateExcelAsync(1, int.MaxValue, "{}", filter, dateFrom, dateTo, offSet);
+                var xls = await Service.GenerateExcelAsync(1, int.MaxValue, "{}", filter, dateFrom, dateTo, dateFromPayment, dateToPayment, bankExpenditureNoteNo,SPBStatus, PaymentStatus, offSet);
 
                 string fileName = "";
                 if (dateFrom == null && dateTo == null)

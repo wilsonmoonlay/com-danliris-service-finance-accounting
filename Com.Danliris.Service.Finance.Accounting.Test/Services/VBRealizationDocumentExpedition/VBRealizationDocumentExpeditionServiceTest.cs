@@ -3,6 +3,7 @@ using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizationDoc
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizationDocumentExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocument;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocumentExpedition;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.HttpClientService;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.IdentityService;
 using Com.Danliris.Service.Finance.Accounting.Lib.Utilities;
@@ -341,6 +342,87 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.VBRealizationDoc
             VBRealizationDocumentExpeditionModel model = _dataUtil(service, dbContext).GetTestDataVerifiedToCashier_VBRealizationDocumentExpedition();
 
             int result = await service.VerifiedToCashier(model.VBRealizationId);
+            Assert.NotEqual(0, result);
+        }
+
+        [Fact]
+        public void UpdateAsync_Return_Success()
+        {
+            FinanceDbContext dbContext = _dbContext(GetCurrentAsyncMethod());
+
+            VBRealizationDocumentExpeditionService service = new VBRealizationDocumentExpeditionService(dbContext, GetServiceProvider().Object);
+            VBRequestDocumentModel model = _dataUtil(service, dbContext).GetTestData_VBRequestDocument();
+            service.UpdateAsync(model.Id, model);
+            var result = model;
+
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public void ReadByIdAsync_Return_Success()
+        {
+            FinanceDbContext dbContext = _dbContext(GetCurrentAsyncMethod());
+
+            VBRealizationDocumentExpeditionService service = new VBRealizationDocumentExpeditionService(dbContext, GetServiceProvider().Object);
+            VBRequestDocumentModel model = _dataUtil(service, dbContext).GetTestData_VBRequestDocument();
+            var result = service.ReadByIdAsync(model.Id);
+
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public async Task ClearanceVBPost_Return_Success()
+        {
+            FinanceDbContext dbContext = _dbContext(GetCurrentAsyncMethod());
+
+            VBRealizationDocumentExpeditionService service = new VBRealizationDocumentExpeditionService(dbContext, GetServiceProvider().Object);
+            VBRequestDocumentModel model = _dataUtil(service, dbContext).GetTestData_VBRequestDocument();
+
+            List<ClearancePostId> postIds = new List<ClearancePostId>();
+            ClearancePostId postId = new ClearancePostId();
+            postId.VBRealizationId = 0;
+            postId.VBRequestId = 1;
+            postIds.Add(postId);
+            var result = await service.ClearanceVBPost(postIds);
+
+            Assert.NotEqual(0, result);
+        }
+
+        [Fact]
+        public async Task ClearanceVBPost2_Return_Success()
+        {
+            FinanceDbContext dbContext = _dbContext(GetCurrentAsyncMethod());
+
+            VBRealizationDocumentExpeditionService service = new VBRealizationDocumentExpeditionService(dbContext, GetServiceProvider().Object);
+            VBRequestDocumentModel model = _dataUtil(service, dbContext).GetTestData_VBRequestDocument();
+
+            List<ClearancePostId> postIds = new List<ClearancePostId>();
+            ClearancePostId postId = new ClearancePostId();
+            postId.VBRealizationId = 0;
+            postId.VBRequestId = 1;
+            postIds.Add(postId);
+
+            ClearanceFormDto clearanceForm = new ClearanceFormDto();
+            clearanceForm.Bank = new Lib.ViewModels.NewIntegrationViewModel.AccountBankViewModel { 
+                AccountCOA = "",
+                AccountName = "",
+                AccountNumber = "",
+                BankCode = "",
+                BankName = "",
+                Code = "",
+                Currency = new Lib.ViewModels.NewIntegrationViewModel.CurrencyViewModel {
+                    Code = "",
+                    Description = "",
+                    Id = 1,
+                    Rate = 1,
+                    Symbol = ""
+                },
+                Id = 1
+            };
+            clearanceForm.ListIds = postIds;
+
+            var result = await service.ClearanceVBPost(clearanceForm);
+
             Assert.NotEqual(0, result);
         }
     }

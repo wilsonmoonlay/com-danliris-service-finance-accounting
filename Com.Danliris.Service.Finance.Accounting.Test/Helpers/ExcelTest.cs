@@ -43,6 +43,64 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Helpers
             var result = Excel.CreateExcel(dtSourceList, true);
             Assert.NotNull(result);
         }
-        
+
+        [Fact]
+        public void CreateExcelWithTitleNonDateFilterWith_Success()
+        {
+            string title = "title";
+            string date = "date";
+
+            DataTable dt = new DataTable();
+
+            dt.Columns.Add(new DataColumn() { ColumnName = "Tanggal", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Bon Terima Unit", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Bukti Pengeluaran Bank", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor NI/SPB", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Memo", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Invoice", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Koreksi", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Tempo Pembayaran", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nilai Invoice DPP", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nilai Invoice DPP Valas", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nilai Invoice PPN", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nilai Invoice Total", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Mutasi", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Saldo Akhir", DataType = typeof(string) });
+
+            dt.Rows.Add("", "", "", "", "", "", "", "", "", "TOTAL", "", "", "IDR", 0.ToString("#,##0.#0"));
+
+            var result = Excel.CreateExcelWithTitleNonDateFilter(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(dt, "Kartu Hutang") }, title, date, true, 1);
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public void CreateExcelWithTitleNonDateFilterWithSupplierName_Success()
+        {
+            string title = "title";
+            string supplierName = "supplierName";
+            string date = "date";
+
+            DataTable dt = new DataTable();
+
+            dt.Columns.Add(new DataColumn() { ColumnName = "Tanggal", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Bon Terima Unit", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Bukti Pengeluaran Bank", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor NI/SPB", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Memo", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Invoice", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nomor Koreksi", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Tempo Pembayaran", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nilai Invoice DPP", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nilai Invoice DPP Valas", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nilai Invoice PPN", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Nilai Invoice Total", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Mutasi", DataType = typeof(string) });
+            dt.Columns.Add(new DataColumn() { ColumnName = "Saldo Akhir", DataType = typeof(string) });
+
+            dt.Rows.Add("", "", "", "", "", "", "", "", "", "TOTAL", "", "", "IDR", 0.ToString("#,##0.#0"));
+
+            var result = Excel.CreateExcelWithTitleNonDateFilterWithSupplierName(new List<KeyValuePair<DataTable, string>>() { new KeyValuePair<DataTable, string>(dt, "Kartu Hutang") }, title, supplierName, date, true, 1);
+            Assert.NotNull(result);
+        }
     }
 }

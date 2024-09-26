@@ -15,6 +15,7 @@ using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.MemoGarmentPurchasi
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.MemoGarmentPurchasing;
 using Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates;
 using System.IO;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.JournalTransaction;
 
 namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoGarmentPurchasing
 {
@@ -119,7 +120,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoGarm
                 VerifyUser();
                 _validateService.Validate(viewModel);
 
-                if (id != viewModel.Id)
+                if (id != viewModel.Id.GetValueOrDefault())
                 {
                     var result = new ResultFormatter(ApiVersion, General.BAD_REQUEST_STATUS_CODE, General.BAD_REQUEST_MESSAGE).Fail();
                     return BadRequest(result);
@@ -190,5 +191,34 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.MemoGarm
                 return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
             }
         }
+
+        [HttpPost("posting")]
+        public async Task<ActionResult> Posting([FromBody] List<JournalTransactionModel> viewModels)
+        {
+            try
+            {
+                VerifyUser();
+                _validateService.Validate(viewModels);
+
+                var model = _mapper.Map<List<JournalTransactionModel>>(viewModels);
+                await _service.Posting(model);
+
+                var result = new ResultFormatter(ApiVersion, General.CREATED_STATUS_CODE, General.OK_MESSAGE).Ok();
+                return Created(String.Concat(Request.Path, "/", 0), result);
+            }
+            catch (ServiceValidationException e)
+            {
+                var result = new ResultFormatter(ApiVersion, General.BAD_REQUEST_STATUS_CODE, General.BAD_REQUEST_MESSAGE).Fail(e);
+                return BadRequest(result);
+            }
+            catch (Exception e)
+            {
+                var result =
+                    new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, result);
+            }
+        }
+
     }
 }

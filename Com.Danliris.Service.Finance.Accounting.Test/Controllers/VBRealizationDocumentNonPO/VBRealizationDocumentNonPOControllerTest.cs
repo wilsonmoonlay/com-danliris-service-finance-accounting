@@ -92,6 +92,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.VBRealization
                         Name="Name",
                         Rate=1
                     },
+                    VatTax=new VatTaxViewModel()
+                    {
+                        Id="1",
+                        Rate="10"
+                    },
                     Amount=1,
                     IncomeTaxBy="Supplier",
                     IsGetPPh=true,

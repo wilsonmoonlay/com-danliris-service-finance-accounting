@@ -15,6 +15,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.VBRealizationDo
         public bool IsGetPPh { get; set; }
         public decimal PPnAmount { get; set; }
         public decimal PPhAmount { get; set; }
+        public VatTaxViewModel VatTax { get; set; }
         public IncomeTaxViewModel IncomeTax { get; set; }
         public string IncomeTaxBy { get; set; }
         public decimal Total { get; set; }

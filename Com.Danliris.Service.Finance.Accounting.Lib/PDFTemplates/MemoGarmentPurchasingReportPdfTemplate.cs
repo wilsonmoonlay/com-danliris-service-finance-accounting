@@ -197,8 +197,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
                 VerticalAlignment = Element.ALIGN_MIDDLE
             };
 
-            int totalDebit = 0;
-            int totalCredit = 0;
+            double totalDebit = 0;
+            double totalCredit = 0;
             int index = 1;
 
             cell.Phrase = new Phrase(index.ToString(), _smallerFont);

@@ -222,5 +222,28 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.PurchasingDis
             Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
         }
 
-    }
+
+		[Fact]
+		public void GetBankExpenditureNoReturnOK()
+		{
+			var mocks = GetMocks();
+			mocks.Service.Setup(f => f.ReadBankExpenditureNoteNo(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>())).Returns(new ReadResponse<PurchasingDispositionExpeditionModel>(new List<PurchasingDispositionExpeditionModel>(), 0, new Dictionary<string, string>(), new List<string>()));
+			mocks.Mapper.Setup(f => f.Map<List<PurchasingDispositionExpeditionViewModel>>(It.IsAny<List<PurchasingDispositionExpeditionModel>>())).Returns(new List<PurchasingDispositionExpeditionViewModel>());
+
+			var response = GetController(mocks).GetLoaderBankExpenditureNoteNo();
+			Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+		}
+
+		[Fact]
+		public void GetBankExpenditureNoReturnInternalservererror()
+		{
+			var mocks = GetMocks();
+			mocks.Service.Setup(f => f.ReadBankExpenditureNoteNo(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>())).Throws(new Exception());
+
+			mocks.Mapper.Setup(f => f.Map<List<PurchasingDispositionExpeditionViewModel>>(It.IsAny<List<PurchasingDispositionExpeditionModel>>())).Returns(new List<PurchasingDispositionExpeditionViewModel>());
+
+			var response = GetController(mocks).GetLoaderBankExpenditureNoteNo();
+			Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+		}
+	}
 }

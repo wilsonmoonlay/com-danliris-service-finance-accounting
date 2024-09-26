@@ -32,8 +32,14 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
                 IncomeTaxName = viewModel.IncomeTax.Name;
                 IncomeTaxRate = viewModel.IncomeTax.Rate.GetValueOrDefault();
             }
+            if (viewModel.VatTax != null)
+            {
+                VatId = viewModel.VatTax.Id;
+                VatRate = viewModel.VatTax.Rate;
+            }
             IncomeTaxBy = viewModel.IncomeTaxBy;
             VBRealizationDocumentId = vbRealizationDocumentId;
+
         }
 
         public VBRealizationDocumentExpenditureItemModel(int headerId, FormItemDto element)
@@ -44,6 +50,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
             Amount = (decimal)element.UnitPaymentOrder.Amount.GetValueOrDefault();
             Date = element.UnitPaymentOrder.Date.GetValueOrDefault();
             UseVat = element.UnitPaymentOrder.UseVat.GetValueOrDefault();
+            VatId = element.UnitPaymentOrder.VatTax.Id;
+            VatRate = element.UnitPaymentOrder.VatTax.Rate;
             UseIncomeTax = element.UnitPaymentOrder.UseIncomeTax.GetValueOrDefault();
             IncomeTaxId = element.UnitPaymentOrder.IncomeTax.Id.GetValueOrDefault();
             IncomeTaxBy = element.UnitPaymentOrder.IncomeTaxBy;
@@ -61,6 +69,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
         public string Remark { get; private set; }
         public decimal Amount { get; private set; }
         public bool UseVat { get; private set; }
+        public string VatId { get; private set; }
+        public string VatRate { get; private set; }
         public bool UseIncomeTax { get; private set; }
         public int IncomeTaxId { get; private set; }
         [MaxLength(64)]
@@ -122,6 +132,22 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
                 UseVat = newUseVat;
                 this.FlagForUpdate(user, userAgent);
             }
+        }
+
+        public void SetVatTax(string newVatId, string newVatRate, string user, string userAgent)
+        {
+            if (newVatId != VatId)
+            {
+                VatId = newVatId;
+                this.FlagForUpdate(user, userAgent);
+            }
+
+            if (newVatRate != VatRate)
+            {
+                VatRate = newVatRate;
+                this.FlagForUpdate(user, userAgent);
+            }
+
         }
 
         public void SetUseIncomeTax(bool newUseIncomeTax, string user, string userAgent)

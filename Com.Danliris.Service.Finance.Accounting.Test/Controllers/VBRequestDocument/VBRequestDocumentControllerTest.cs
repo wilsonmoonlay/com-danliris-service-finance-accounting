@@ -1155,6 +1155,50 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.VBRequestDocu
             int statusCode = this.GetStatusCode(response);
             Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
         }
+
+        [Fact]
+        public void GetVBForPurchasing_Succes_Return_OK()
+        {
+            //Setup
+            Mock<IServiceProvider> serviceProviderMock = GetServiceProvider();
+            var service = new Mock<IVBRequestDocumentService>();
+
+            service.Setup(s => s.GetVBForPurchasing(It.IsAny<int>())).Returns(true);
+
+            serviceProviderMock
+               .Setup(serviceProvider => serviceProvider.GetService(typeof(IVBRequestDocumentService)))
+               .Returns(service.Object);
+
+            //Act
+            IActionResult response = GetController(serviceProviderMock).GetVBForPurchasing(1);
+
+            //Assert
+            int statusCode = this.GetStatusCode(response);
+            Assert.Equal((int)HttpStatusCode.OK, statusCode);
+        }
+
+        [Fact]
+        public void GetVBForPurchasing_Return_InternalServerError()
+        {
+            //Setup
+            Mock<IServiceProvider> serviceProviderMock = GetServiceProvider();
+            var service = new Mock<IVBRequestDocumentService>();
+
+            service
+                .Setup(s => s.GetVBForPurchasing(It.IsAny<int>()))
+                .Throws(new Exception());
+
+            serviceProviderMock
+               .Setup(serviceProvider => serviceProvider.GetService(typeof(IVBRequestDocumentService)))
+               .Returns(service.Object);
+
+            //Act
+            IActionResult response = GetController(serviceProviderMock).GetVBForPurchasing(0);
+
+            //Assert
+            int statusCode = this.GetStatusCode(response);
+            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
+        }
     }
 }
 

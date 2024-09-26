@@ -63,6 +63,28 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
             }
         }
 
+        [HttpGet("by-reference-no/{referenceNo}")]
+        public virtual IActionResult GetByReferenceNo([FromRoute] string referenceNo)
+        {
+            try
+            {
+                VerifyUser();
+                var data = _service.ReadByReferenceNo(referenceNo);
+
+                //List<TViewModel> dataVM = Mapper.Map<List<TViewModel>>(read.Data);
+
+                return Ok(new { data });
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetNonPOById([FromRoute] int id)
         {
@@ -99,5 +121,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
                 return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
             }
         }
+
+
     }
 }

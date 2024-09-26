@@ -114,7 +114,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.OthersExpendi
             }
         }
 
-        
+
         [Fact]
         public async Task GetById_WithoutException_ReturnOK()
         {
@@ -365,13 +365,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.OthersExpendi
             var validateServiceMock = new Mock<IValidateService>();
             validateServiceMock.Setup(validateService => validateService.Validate(It.IsAny<OthersExpenditureProofDocumentCreateUpdateViewModel>())).Verifiable();
             var serviceMock = new Mock<IOthersExpenditureProofDocumentService>();
-            serviceMock.Setup(service => service.Posting(It.IsAny<List<int>>())).ReturnsAsync(1);
+            serviceMock.Setup(service => service.Posting(It.IsAny<List<int>>())).ReturnsAsync("1");
 
             var controller = GetController(identityServiceMock.Object, validateServiceMock.Object, serviceMock.Object);
             var response = await controller.Posting(It.IsAny<List<int>>());
 
             int statusCode = GetStatusCode(response);
-            Assert.Equal((int)HttpStatusCode.NoContent, statusCode);
+            Assert.Equal((int)HttpStatusCode.OK, statusCode);
         }
 
         [Fact]
@@ -385,6 +385,110 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.OthersExpendi
 
             var controller = GetController(identityServiceMock.Object, validateServiceMock.Object, serviceMock.Object);
             var response = await controller.Posting(It.IsAny<List<int>>());
+
+            int statusCode = GetStatusCode(response);
+            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
+        }
+
+        [Fact]
+        public async Task GetLoader_WithoutException_ReturnOK()
+        {
+            var identityServiceMock = new Mock<IIdentityService>();
+            var validateServiceMock = new Mock<IValidateService>();
+            var serviceMock = new Mock<IOthersExpenditureProofDocumentService>();
+            serviceMock.Setup(service => service.GetLoaderAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(new OthersExpenditureProofPagedListViewModel());
+
+            var controller = GetController(identityServiceMock.Object, validateServiceMock.Object, serviceMock.Object);
+            var response = await controller.GetLoader("test", "test");
+
+            int statusCode = GetStatusCode(response);
+            Assert.Equal((int)HttpStatusCode.OK, statusCode);
+        }
+
+        [Fact]
+        public async Task GetLoader_WithException_ReturnInternalServerError()
+        {
+            var identityServiceMock = new Mock<IIdentityService>();
+            var validateServiceMock = new Mock<IValidateService>();
+            var serviceMock = new Mock<IOthersExpenditureProofDocumentService>();
+            serviceMock.Setup(service => service.GetLoaderAsync(It.IsAny<string>(), It.IsAny<string>())).ThrowsAsync(new Exception("test failed"));
+
+            var controller = GetController(identityServiceMock.Object, validateServiceMock.Object, serviceMock.Object);
+            var response = await controller.GetLoader("test", "test");
+
+            int statusCode = GetStatusCode(response);
+            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
+        }
+
+        [Fact]
+        public async Task GetReport_WithoutException_ReturnOK()
+        {
+            var identityServiceMock = new Mock<IIdentityService>();
+            var validateServiceMock = new Mock<IValidateService>();
+            var serviceMock = new Mock<IOthersExpenditureProofDocumentService>();
+            serviceMock.Setup(service => service.GetReportList(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(new Lib.BusinessLogic.Services.OthersExpenditureProofDocument.OthersExpenditureProofDocumentReportListViewModel());
+
+            var controller = GetController(identityServiceMock.Object, validateServiceMock.Object, serviceMock.Object);
+            var response = await controller.GetReport(DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, "test", "test", 1, 23, "{}", "test");
+
+            int statusCode = GetStatusCode(response);
+            Assert.Equal((int)HttpStatusCode.OK, statusCode);
+        }
+
+        [Fact]
+        public async Task GetReport_WithException_ReturnInternalServerError()
+        {
+            var identityServiceMock = new Mock<IIdentityService>();
+            var validateServiceMock = new Mock<IValidateService>();
+            var serviceMock = new Mock<IOthersExpenditureProofDocumentService>();
+            serviceMock.Setup(service => service.GetReportList(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ThrowsAsync(new Exception("test failed"));
+
+            var controller = GetController(identityServiceMock.Object, validateServiceMock.Object, serviceMock.Object);
+            var response = await controller.GetReport(DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, "test", "test", 1, 23, "{}", "test");
+
+            int statusCode = GetStatusCode(response);
+            Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);
+        }
+
+        [Fact]
+        public async Task GetReportXls_WithoutException_ReturnOK()
+        {
+            var identityServiceMock = new Mock<IIdentityService>();
+            var validateServiceMock = new Mock<IValidateService>();
+            var serviceMock = new Mock<IOthersExpenditureProofDocumentService>();
+            serviceMock.Setup(service => service.GetReportList(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(new Lib.BusinessLogic.Services.OthersExpenditureProofDocument.OthersExpenditureProofDocumentReportListViewModel
+                {
+                    Count = 1,
+                    Page = 1,
+                    Size = 1,
+                    Total = 1,
+                    Data = new List<Lib.BusinessLogic.Services.OthersExpenditureProofDocument.OthersExpenditureProofDocumentReportViewModel> {
+                    new Lib.BusinessLogic.Services.OthersExpenditureProofDocument.OthersExpenditureProofDocumentReportViewModel
+                    {
+                        Total=10,
+                        Date = DateTimeOffset.Now
+                    }
+                    }
+                });
+
+            var controller = GetController(identityServiceMock.Object, validateServiceMock.Object, serviceMock.Object);
+            var response = await controller.GetReportXls(DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, "test", "test", 1, 23, "{}", "test");
+
+            //int statusCode = GetStatusCode(response);
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public async Task GetReportXls_WithException_ReturnInternalServerError()
+        {
+            var identityServiceMock = new Mock<IIdentityService>();
+            var validateServiceMock = new Mock<IValidateService>();
+            var serviceMock = new Mock<IOthersExpenditureProofDocumentService>();
+            serviceMock.Setup(service => service.GetReportList(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ThrowsAsync(new Exception("test failed"));
+
+            var controller = GetController(identityServiceMock.Object, validateServiceMock.Object, serviceMock.Object);
+            var response = await controller.GetReportXls(DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, "test", "test", 1, 23, "{}", "test");
 
             int statusCode = GetStatusCode(response);
             Assert.Equal((int)HttpStatusCode.InternalServerError, statusCode);

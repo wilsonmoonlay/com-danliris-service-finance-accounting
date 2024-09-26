@@ -271,5 +271,8 @@ __pycache__/
 /Com.Danliris.Service.Finance.Accounting.WebApi/Properties
 /Com.Danliris.Service.Finance.Accounting.WebApi/wwwroot
 /Com.Danliris.Service.Finance.Accounting.WebApi/appsettings.Development.json
+/Com.Danliris.Service.Finance.Accounting.WebApi/appsettings.localhost.json
+/Com.Danliris.Service.Finance.Accounting.WebApi/appsettings.UAT.json
+/Com.Danliris.Service.Finance.Accounting.WebApi/appsettings.Production.json
 /Com.Danliris.Service.Finance.Accounting.WebApi/appsettings.json
 /Com.Danliris.Service.Finance.Accounting.WebApi/bundleconfig.json

@@ -16,8 +16,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.MemoDetailGarme
         public int MemoAmount { get; set; }
         public int MemoIdrAmount { get; set; }
         public string AccountingBookType { get; set; }
-        public int PaymentRate { get; set; }
-        public int PurchasingRate { get; set; }
+        public double PaymentRate { get; set; }
+        public double PurchasingRate { get; set; }
         public string SupplierCode { get; set; }
         public string SupplierName { get; set; }
     }

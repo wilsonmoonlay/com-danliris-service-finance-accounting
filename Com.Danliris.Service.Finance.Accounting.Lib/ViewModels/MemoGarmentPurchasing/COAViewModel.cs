@@ -6,7 +6,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.MemoGarmentPurc
 {
     public class COAViewModel
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public string No { get; set; }
         public string Name { get; set; }
     }

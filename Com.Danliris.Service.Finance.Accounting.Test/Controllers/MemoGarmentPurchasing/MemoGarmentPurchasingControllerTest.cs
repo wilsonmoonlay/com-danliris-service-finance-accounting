@@ -278,7 +278,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.MemoGarmentPu
 
             var controller = GetController(serviceProviderMock.Object);
 
-            var response = await controller.Put(It.IsAny<int>(),new MemoGarmentPurchasingViewModel());
+            var response = await controller.Put(1,new MemoGarmentPurchasingViewModel() { Id = 1 });
             var statusCode = GetStatusCode(response);
 
             Assert.Equal((int)HttpStatusCode.NoContent, statusCode);

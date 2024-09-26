@@ -152,8 +152,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
                 VerticalAlignment = Element.ALIGN_MIDDLE
             };
 
-            int totalDebit = 0;
-            int totalCredit = 0;
+            double totalDebit = 0;
+            double totalCredit = 0;
             int no = 1;
 
             foreach (var detail in data.MemoGarmentPurchasingDetails)

@@ -38,6 +38,26 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.JournalTransacti
                 };
 
                 return Task.FromResult(result);
+            }else if (url.Contains("master/account-banks"))
+            {
+                var defaultresponse = new APIDefaultResponse<AccountBank>()
+                {
+                    data = 
+                      new AccountBank()
+                      {
+                          Id=1,
+                          DivisionName ="test",
+                          BankName="tse",
+                          AccountCOA="test"
+                      }
+                    
+                };
+                var result = new HttpResponseMessage()
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(defaultresponse))
+                };
+
+                return Task.FromResult(result);
             }
             else
             {

@@ -2,6 +2,7 @@
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.NewIntegrationViewModel;
+using Com.Danliris.Service.Finance.Accounting.Test.DataUtils.Masters.COADataUtils;
 using System;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.DataUtils.DailyBankTransa
     public class DailyBankTransactionDataUtil
     {
         private readonly DailyBankTransactionService Service;
+        private readonly COADataUtil _COADataUtil;
 
         public DailyBankTransactionDataUtil(DailyBankTransactionService service)
         {
@@ -154,6 +156,54 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.DataUtils.DailyBankTransa
             model.Status = "OUT";
             await Service.CreateAsync(model);
             return await Service.ReadByIdAsync(model.Id);
+        }
+
+        public DailyBankTransactionModel GetNewData_InternalFunding()
+        {
+            DailyBankTransactionModel TestData = new DailyBankTransactionModel()
+            {
+                AccountBankAccountName = "AccountName",
+                AccountBankAccountNumber = "AccountNumber",
+                AccountBankCode = "BankCode",
+                AccountBankCurrencyCode = "CurrencyCode",
+                AccountBankCurrencyId = 1,
+                AccountBankCurrencySymbol = "CurrencySymbol",
+                AccountBankId = 1,
+                AccountBankName = "BankName",
+                AfterNominal = 0,
+                BeforeNominal = 0,
+                BuyerCode = "BuyerCode",
+                BuyerId = 1,
+                BuyerName = "BuyerName",
+                Date = DateTimeOffset.UtcNow,
+                Nominal = 1000,
+                ReferenceNo = "",
+                ReferenceType = "ReferenceType",
+                Remark = "Remark",
+                SourceType = "Operasional",
+                Status = "IN",
+                SupplierCode = "SupplierCode",
+                SupplierName = "SupplierName",
+                SupplierId = 1,
+                DestinationBankAccountName = "AccountName",
+                DestinationBankAccountNumber = "AccountNumber",
+                DestinationBankCode = "BankCode",
+                DestinationBankCurrencyCode = "CurrencyCode",
+                DestinationBankCurrencyId = 1,
+                DestinationBankCurrencySymbol = "CurrencySymbol",
+                DestinationBankId = 1,
+                DestinationBankName = "BankName",
+                IsPosted = true,
+                AfterNominalValas = 1,
+                BeforeNominalValas = 1,
+                TransactionNominal = 1,
+                NominalValas = 1,
+                Receiver = "Receiver",
+
+
+            };
+
+            return TestData;
         }
     }
 }

@@ -448,7 +448,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
         }
 
         [HttpGet("report")]
-        public IActionResult GetReport(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset? startDate, DateTimeOffset? endDate)
+        public IActionResult GetReport(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset? startDate, DateTimeOffset? endDate, DateTimeOffset? startDateAccounting, DateTimeOffset? endDateAccounting)
         {
             try
             {
@@ -456,7 +456,10 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
                 endDate = !endDate.HasValue ? DateTimeOffset.Now : endDate.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Date.AddHours(17);
                 startDate = !startDate.HasValue ? DateTimeOffset.MinValue : startDate;
 
-                var result = _reportService.GetReport(internalNoteId, supplierId, position, startDate.GetValueOrDefault(), endDate.GetValueOrDefault());
+                endDateAccounting = !endDateAccounting.HasValue ? DateTimeOffset.Now : endDateAccounting.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Date.AddHours(17);
+                startDateAccounting = !startDateAccounting.HasValue ? DateTimeOffset.MinValue : startDateAccounting;
+
+                var result = _reportService.GetReportViewModel(internalNoteId, supplierId, position, startDate.GetValueOrDefault(), endDate.GetValueOrDefault(), startDateAccounting.GetValueOrDefault(), endDateAccounting.GetValueOrDefault());
                 return Ok(new
                 {
                     apiVersion = ApiVersion,
@@ -472,7 +475,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
         }
 
         [HttpGet("report/xls")]
-        public IActionResult GetReportXls(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset? startDate, DateTimeOffset? endDate)
+        public IActionResult GetReportXls(int internalNoteId, int supplierId, GarmentPurchasingExpeditionPosition position, DateTimeOffset? startDate, DateTimeOffset? endDate, DateTimeOffset? startDateAccounting, DateTimeOffset? endDateAccounting)
         {
             try
             {
@@ -480,7 +483,10 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1
                 endDate = !endDate.HasValue ? DateTimeOffset.Now : endDate.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Date.AddHours(17);
                 startDate = !startDate.HasValue ? DateTimeOffset.MinValue : startDate;
 
-                var stream = _reportService.GenerateExcel(internalNoteId, supplierId, position, startDate.GetValueOrDefault(), endDate.GetValueOrDefault());
+                endDateAccounting = !endDateAccounting.HasValue ? DateTimeOffset.Now : endDateAccounting.GetValueOrDefault().AddHours(_identityService.TimezoneOffset).Date.AddHours(17);
+                startDateAccounting = !startDateAccounting.HasValue ? DateTimeOffset.MinValue : startDateAccounting;
+
+                var stream = _reportService.GenerateExcel(internalNoteId, supplierId, position, startDate.GetValueOrDefault(), endDate.GetValueOrDefault(), startDateAccounting.GetValueOrDefault(), endDateAccounting.GetValueOrDefault());
 
                 var bytes = stream.ToArray();
                 var filename = "Laporan Ekspedisi Garment.xlsx";

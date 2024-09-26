@@ -188,5 +188,45 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Controllers.CreditBalance
             //Assert
             Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
         }
+
+        //[Fact]
+        //public void GetReport_Detail_ReturnOK()
+        //{
+        //    var mocks = GetMocks();
+        //    mocks.Service.Setup(f => f.GetReport(It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int>())).Returns(new ReadResponse<CreditBalanceDetailViewModel>(new List<CreditBalanceDetailViewModel>(), 1, new Dictionary<string, string>(), new List<string>()));
+
+        //    var response = GetController(mocks).GetReportDetail(false, 1, 2018);
+        //    Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+        //}
+
+        [Fact]
+        public void GetReport_Detail_ThrowException()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GetReport(It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int>())).Throws(new Exception());
+
+            var response = GetController(mocks).GetReportDetail(false, 1, 2018);
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
+
+        [Fact]
+        public void GetReportExcelDetail_ReturnFile()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GenerateExcel(It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int>())).Returns(new MemoryStream());
+
+            var response = GetController(mocks).GetReportDetailXls(false, 1, 2018);
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void GetReportExcelDetail_ThrowException()
+        {
+            var mocks = GetMocks();
+            mocks.Service.Setup(f => f.GenerateExcel(It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int>())).Throws(new Exception());
+
+            var response = GetController(mocks).GetReportDetailXls(false, 1, 2018);
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(response));
+        }
     }
 }

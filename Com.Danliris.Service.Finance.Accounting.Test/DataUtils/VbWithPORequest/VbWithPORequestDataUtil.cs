@@ -1,4 +1,5 @@
 ﻿using Com.Danliris.Service.Finance.Accounting.Lib;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDocument;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VbWIthPORequest;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.VbNonPORequest;
 using Microsoft.CodeAnalysis.CSharp;
@@ -55,6 +56,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.DataUtils.VbWithPORequest
                             Id = 0,
                             Code = "Code",
                             Name = "Name",
+                        },
+                        vattax = new VatTaxDto()
+                        {
+                            Id = "2",
+                            Rate = "11",
                         },
 
                         Details = new List<VbWithPORequestDetailItemsViewModel>()

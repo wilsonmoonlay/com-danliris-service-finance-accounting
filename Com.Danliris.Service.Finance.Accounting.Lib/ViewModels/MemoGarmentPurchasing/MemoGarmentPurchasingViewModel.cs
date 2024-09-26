@@ -7,13 +7,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.MemoGarmentPurc
 {
     public class MemoGarmentPurchasingViewModel : IValidatableObject
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public string MemoNo { get; set; }
         public DateTimeOffset? MemoDate { get; set; }
         public AccountingBookViewModel AccountingBook { get; set; }
         public GarmentCurrencyViewModel Currency { get; set; }
         public string Remarks { get; set; }
-        public bool IsPosted { get; set; }
+        public bool? IsPosted { get; set; }
         public List<MemoGarmentPurchasingDetailViewModel> MemoGarmentPurchasingDetails { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

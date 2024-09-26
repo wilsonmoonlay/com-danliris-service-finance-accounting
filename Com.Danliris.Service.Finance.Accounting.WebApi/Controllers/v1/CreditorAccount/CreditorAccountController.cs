@@ -40,6 +40,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.Creditor
         {
             IdentityService.Username = User.Claims.ToArray().SingleOrDefault(p => p.Type.Equals("username")).Value;
             IdentityService.Token = Request.Headers["Authorization"].FirstOrDefault().Replace("Bearer ", "");
+            IdentityService.TimezoneOffset = Convert.ToInt32(Request.Headers["x-timezone-offset"]);
         }
 
         [HttpGet("reports")]
@@ -47,6 +48,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.Creditor
         {
             try
             {
+                VerifyUser();
                 int offSet = Convert.ToInt32(Request.Headers["x-timezone-offset"]);
                 //int offSet = 7;
                 var data = Service.GetReport(page, size, supplierName, month, year, offSet);
@@ -80,6 +82,7 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.Creditor
         {
             try
             {
+                VerifyUser();
                 byte[] xlsInBytes;
                 int offSet = Convert.ToInt32(Request.Headers["x-timezone-offset"]);
                 var xls = Service.GenerateExcel(supplierName, month, year, offSet);
@@ -163,14 +166,17 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.Creditor
         }
 
         [HttpPost("unit-receipt-note")]
-        public async Task<ActionResult> UnitReceiptNotePost([FromBody] CreditorAccountUnitReceiptNotePostedViewModel viewModel)
+        public async Task<ActionResult> UnitReceiptNotePost([FromBody] List<CreditorAccountUnitReceiptNotePostedViewModel> viewModel)
         {
             try
             {
                 VerifyUser();
                 ValidateService.Validate(viewModel);
 
-                await Service.CreateFromUnitReceiptNoteAsync(viewModel);
+                foreach (var model in viewModel)
+                {
+                    await Service.CreateFromUnitReceiptNoteAsync(model);
+                }
 
                 Dictionary<string, object> Result =
                     new ResultFormatter(ApiVersion, General.CREATED_STATUS_CODE, General.OK_MESSAGE)
@@ -347,10 +353,10 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.Creditor
                 foreach(var item in viewModel)
                 {
                     ValidateService.Validate(item);
-
-
-                    await Service.CreateFromBankExpenditureNoteAsync(item);
                 }
+
+                await Service.CreateFromListBankExpenditureNoteAsync(viewModel);
+
                 Dictionary<string, object> Result =
                     new ResultFormatter(ApiVersion, General.CREATED_STATUS_CODE, General.OK_MESSAGE)
                     .Ok();
@@ -511,6 +517,27 @@ namespace Com.Danliris.Service.Finance.Accounting.WebApi.Controllers.v1.Creditor
                 Dictionary<string, object> Result =
                     new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
                     .Fail();
+                return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpPost("unit-payment-correction")]
+        public async Task<IActionResult> UnitPaymentCorrectionPost([FromBody] CreditorAccountUnitPaymentCorrectionPostedViewModel viewModel)
+        {
+            try
+            {
+                VerifyUser();
+                //ValidateService.Validate(viewModel);
+
+                await Service.CreateFromUnitPaymentCorrection(viewModel);
+
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                new ResultFormatter(ApiVersion, General.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                .Fail();
                 return StatusCode(General.INTERNAL_ERROR_STATUS_CODE, Result);
             }
         }

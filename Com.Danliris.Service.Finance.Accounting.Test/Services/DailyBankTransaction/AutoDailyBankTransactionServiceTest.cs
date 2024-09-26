@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.DailyBankTransaction;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDocument;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.OthersExpenditureProofDocument;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.PaymentDispositionNote;
@@ -114,6 +115,23 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.DailyBankTransac
             var result = await service.AutoRevertFromOthersExpenditureProofDocument(model, itemModels);
             Assert.NotEqual(0, result);
         }
+
+        [Fact]
+        public async Task Should_Success_Auto_Journal_Approval_Vb()
+        {
+            var serviceProviderMock = new Mock<IServiceProvider>();
+            serviceProviderMock.Setup(serviceProvider => serviceProvider.GetService(typeof(IDailyBankTransactionService))).Returns(new DailyBankTransactionServiceHelper());
+            serviceProviderMock.Setup(serviceProvider => serviceProvider.GetService(typeof(IHttpClientService))).Returns(new HttpClientOthersExpenditureServiceHelper());
+
+            var service = new AutoDailyBankTransactionService(serviceProviderMock.Object);
+
+            //var model = new OthersExpenditureProofDocumentModel();
+            //var itemModels = new List<OthersExpenditureProofDocumentItemModel>();
+            var itemModels = new List<ApprovalVBAutoJournalDto>() { new ApprovalVBAutoJournalDto { VbRequestDocument = new Lib.Models.VBRequestDocument.VBRequestDocumentModel(), Bank = new Lib.ViewModels.NewIntegrationViewModel.AccountBankViewModel { Currency = new Lib.ViewModels.NewIntegrationViewModel.CurrencyViewModel()} } };
+
+            var result = await service.AutoCreateVbApproval(itemModels);
+            Assert.NotEqual(0, result);
+        }
     }
 
     internal class DailyBankTransactionServiceHelper : IDailyBankTransactionService
@@ -209,6 +227,21 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.DailyBankTransac
         }
 
         public Task<string> GetDocumentNo(string type, string bankCode, string username)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> GetDocumentNo(string type, string bankCode, string username, DateTime date)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ReadResponse<DailyBankTransactionModel> GetReportAll(string referenceNo, int accountBankId, string division, DateTimeOffset? startDate, DateTimeOffset? endDate, int page = 1, int size = 25, string order = "{}", List<string> select = null, string keyword = null, string filter = "{}")
+        {
+            throw new NotImplementedException();
+        }
+
+        public ReadResponse<DailyBankTransactionModel> GetLoader(string keyword = null, string filter = "{}")
         {
             throw new NotImplementedException();
         }

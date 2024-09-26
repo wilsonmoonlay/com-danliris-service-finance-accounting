@@ -123,7 +123,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.PDFTemplates
                 {
                     var price = itm2.Price.GetValueOrDefault() * itm2.DealQuantity.GetValueOrDefault();
                     if (itm2.UseVat && !itm2.UseIncomeTax)
-                        price += price * 0.1;
+                        price += ((price * Convert.ToDouble(itm2.VatTax.Rate))/100);
                     convertCurrency += price;
                     Usage += itm2.Product.Name + ", ";
                 }

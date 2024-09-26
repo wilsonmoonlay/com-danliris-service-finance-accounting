@@ -21,6 +21,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.PaymentDisposit
         public double incomeTaxValue { get; set; }
         public CategoryViewModel category { get; set; }
         public double payToSupplier { get; set; }
+        public double AmountPaid { get; set; }
+        public double SupplierPayment { get; set; }
         public List<PaymentDispositionNoteDetailViewModel> Details { get; set; }
     }
 }

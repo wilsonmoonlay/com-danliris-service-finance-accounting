@@ -9,6 +9,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizatio
 {
     public interface IVBRealizationService
     {
+        PostingJournalDto ReadByReferenceNo(string referenceNo);
         ReadResponse<VBRealizationDocumentModel> Read(int page, int size, string order, List<string> select, string keyword, string filter);
         Task<Tuple<VBRealizationDocumentModel, List<VBRealizationDocumentExpenditureItemModel>, List<VBRealizationDocumentUnitCostsItemModel>>> ReadByIdAsync(int id);
     }

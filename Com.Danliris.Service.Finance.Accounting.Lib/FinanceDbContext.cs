@@ -27,6 +27,15 @@ using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentDebtBalance;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentDispositionExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.MemoGarmentPurchasing;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.AccountingBook;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.Memorial;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.PurchasingMemoDetailTextile;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.BankCashReceipt;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.BankCashReceiptDetail;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.PurchasingMemoTextile;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.MemorialDetail;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.BankCashReceiptDetailLocal;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.MemorialDetailLocal;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentFinance.LocalDebiturBalance;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib
 {
@@ -99,6 +108,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib
         public DbSet<DPPVATBankExpenditureNoteModel> DPPVATBankExpenditureNotes { get; set; }
         public DbSet<DPPVATBankExpenditureNoteItemModel> DPPVATBankExpenditureNoteItems { get; set; }
         public DbSet<DPPVATBankExpenditureNoteDetailModel> DPPVATBankExpenditureNoteDetails { get; set; }
+        public DbSet<DPPVATBankExpenditureNoteDetailDoModel> DPPVATBankExpenditureNoteDetailDos { get; set; }
 
 
         public DbSet<GarmentPurchasingPphBankExpenditureNoteModel> GarmentPurchasingPphBankExpenditureNotes { get; set; }
@@ -108,13 +118,47 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib
         public DbSet<GarmentInvoicePurchasingDispositionModel> GarmentInvoicePurchasingDispositions { get; set; }
         public DbSet<GarmentInvoicePurchasingDispositionItemModel> GarmentInvoicePurchasingDispositionItems { get; set; }
         public DbSet<GarmentDebtBalanceModel> GarmentDebtBalances { get; set; }
-
+        
         public DbSet<MemoGarmentPurchasingModel> MemoGarmentPurchasings { get; set; }
         public DbSet<MemoGarmentPurchasingDetailModel> MemoGarmentPurchasingDetails { get; set; }
         public DbSet<MemoDetailGarmentPurchasingModel> MemoDetailGarmentPurchasings { get; set; }
+        public DbSet<MemoDetailGarmentPurchasingDispositionModel> MemoDetailGarmentPurchasingDispositions { get; set; }
         public DbSet<MemoDetailGarmentPurchasingDetailModel> MemoDetailGarmentPurchasingDetails { get; set; }
 
         public DbSet<AccountingBookModel> AccountingBooks { get; set; }
+
+        public DbSet<GarmentFinanceMemorialModel> GarmentFinanceMemorials { get; set; }
+        public DbSet<GarmentFinanceMemorialItemModel> GarmentFinanceMemorialItems { get; set; }
+
+        public DbSet<PurchasingMemoDetailTextileModel> PurchasingMemoDetailTextiles { get; set; }
+        public DbSet<PurchasingMemoDetailTextileItemModel> PurchasingMemoDetailTextileItems { get; set; }
+        public DbSet<PurchasingMemoDetailTextileDetailModel> PurchasingMemoDetailTextileDetails { get; set; }
+        public DbSet<PurchasingMemoDetailTextileUnitReceiptNoteModel> PurchasingMemoDetailTextileUnitReceiptNotes { get; set; }
+
+        public DbSet<BankCashReceiptModel> GarmentFinanceBankCashReceipts { get; set; }
+        public DbSet<BankCashReceiptItemModel> GarmentFinanceBankCashReceiptItems { get; set; }
+
+        public DbSet<BankCashReceiptDetailModel> GarmentFinanceBankCashReceiptDetails { get; set; }
+        public DbSet<BankCashReceiptDetailItemModel> GarmentFinanceBankCashReceiptDetailItems { get; set; }
+        public DbSet<BankCashReceiptDetailOtherItemModel> GarmentFinanceBankCashReceiptDetailOtherItems { get; set; }
+
+        public DbSet<PurchasingMemoTextileModel> PurchasingMemoTextiles { get; set; }
+        public DbSet<PurchasingMemoTextileItemModel> PurchasingMemoTextileItems { get; set; }
+
+        public DbSet<GarmentFinanceMemorialDetailModel> GarmentFinanceMemorialDetails { get; set; }
+        public DbSet<GarmentFinanceMemorialDetailItemModel> GarmentFinanceMemorialDetailItems { get; set; }
+        public DbSet<GarmentFinanceMemorialDetailOtherItemModel> GarmentFinanceMemorialDetailOtherItems { get; set; }
+        public DbSet<GarmentFinanceMemorialDetailRupiahItemModel> GarmentFinanceMemorialDetailRupiahItems { get; set; }
+
+        public DbSet<GarmentFinanceMemorialDetailLocalModel> GarmentFinanceMemorialDetailLocals { get; set; }
+        public DbSet<GarmentFinanceMemorialDetailLocalItemModel> GarmentFinanceMemorialDetailLocalItems { get; set; }
+        public DbSet<GarmentFinanceMemorialDetailLocalOtherItemModel> GarmentFinanceMemorialDetailLocalOtherItems { get; set; }
+
+        public DbSet<GarmentFinanceBankCashReceiptDetailLocalModel> GarmentFinanceBankCashReceiptDetailLocals { get; set; }
+        public DbSet<GarmentFinanceBankCashReceiptDetailLocalItemModel> GarmentFinanceBankCashReceiptDetailLocalItems { get; set; }
+        public DbSet<GarmentFinanceBankCashReceiptDetailLocalOtherItemModel> GarmentFinanceBankCashReceiptDetailLocalOtherItems { get; set; }
+
+        public DbSet<GarmentLocalDebiturBalanceModel> GarmentLocalDebiturBalances { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

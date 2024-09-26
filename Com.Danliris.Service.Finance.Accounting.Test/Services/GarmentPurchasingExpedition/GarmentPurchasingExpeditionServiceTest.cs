@@ -183,7 +183,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.GarmentPurchasin
 
             var dto = await GetDataUtil(service).GetTestData();
             //Act
-            var result = service.GetByPosition("", 1, 10, "{}", GarmentPurchasingExpeditionPosition.SendToAccounting,1,1);
+            var result = service.GetByPosition("1", 1, 10, "{}", GarmentPurchasingExpeditionPosition.Purchasing,1,1, "IDR");
 
             //Assert
             Assert.NotNull(result);
@@ -217,10 +217,12 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.GarmentPurchasin
             var dto = await GetDataUtil(service).GetTestData();
             //Act
             var result =  service.GetSendToVerificationOrAccounting("",1,10,"{}");
+            var result2 =  service.GetSendToVerificationOrAccounting("1",1,10,"{}");
 
             //Assert
             Assert.NotNull( result);
             Assert.NotEqual(0,result.Count);
+            Assert.Equal(0,result2.Count);
         }
 
 
@@ -249,10 +251,12 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.GarmentPurchasin
             var dto = await GetDataUtil(service).GetTestData();
             //Act
             var result = service.GetVerified("", 1, 10, "{}");
+            var result2 = service.GetVerified("1", 1, 10, "{}");
 
             //Assert
             Assert.NotNull(result);
             Assert.NotEqual(0, result.Count);
+            Assert.Equal(0, result2.Count);
         }
 
 
@@ -554,11 +558,15 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.GarmentPurchasin
             var service = new GarmentPurchasingExpeditionService(serviceProviderMock.Object);
 
             var dto = await GetDataUtil(service).GetTestData();
+            var ids = new List<int>();
+            ids.Add(dto.Id);
             //Act
             var result = await service.SendToPurchasingRejected(dto.Id,dto.Remark);
+            var result2 = await service.SendToPurchasingRejected(ids, dto.Remark);
 
             //Assert
             Assert.NotEqual(0, result);
+            Assert.NotEqual(0, result2);
         }
 
     }

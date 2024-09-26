@@ -91,6 +91,8 @@
     <Compile Remove="Migrations\20210407071230_InvoicesSize.Designer.cs" />
     <Compile Remove="Migrations\20210407071532_InvoicesSizeMax.cs" />
     <Compile Remove="Migrations\20210407071532_InvoicesSizeMax.Designer.cs" />
+    <Compile Remove="Migrations\20210507002710_AddingDetailDoInDPPVATBankExpenditure.cs" />
+    <Compile Remove="Migrations\20210507002710_AddingDetailDoInDPPVATBankExpenditure.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

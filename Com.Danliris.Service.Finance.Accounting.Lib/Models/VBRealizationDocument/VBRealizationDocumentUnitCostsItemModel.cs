@@ -54,7 +54,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
             IncomeTaxBy = element.IncomeTaxBy;
         }
 
-        public VBRealizationDocumentUnitCostsItemModel(int id, UnitCostDto element)
+        public VBRealizationDocumentUnitCostsItemModel(int id, UnitCostDto element, int VBExpenditureId)
         {
             VBRealizationDocumentId = id;
             UnitCode = element.Unit.Code;
@@ -63,6 +63,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
             DivisionCode = element.Unit.Division.Code;
             DivisionId = element.Unit.Division.Id.GetValueOrDefault();
             DivisionName = element.Unit.Division.Name;
+            VBRealizationDocumentExpenditureItemId = VBExpenditureId;
 
             Amount = (decimal)element.Amount.GetValueOrDefault();
         }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.Helpers
 {
@@ -138,6 +139,36 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Helpers
             return stream;
         }
 
+        public static MemoryStream CreateExcelWithTitleNonDateFilterWithSupplierName(List<KeyValuePair<DataTable, string>> dtSourceList, string title, string suplierName, string date, bool styling = false, int index = 0)
+        {
+            ExcelPackage package = new ExcelPackage();
+            foreach (KeyValuePair<DataTable, string> item in dtSourceList)
+            {
+                var sheet = package.Workbook.Worksheets.Add(item.Value);
+
+                sheet.Cells["A2"].Value = "PT. DANLIRIS";
+                sheet.Cells["A2:D2"].Merge = true;
+
+                sheet.Cells["A3"].Value = title;
+                sheet.Cells["A3:D3"].Merge = true;
+
+                sheet.Cells["A4"].Value = suplierName;
+                sheet.Cells["A4:D4"].Merge = true;
+
+                sheet.Cells["A5"].Value = $"Per {date}";
+                sheet.Cells["A5:D5"].Merge = true;
+
+                sheet.Cells["A7"].LoadFromDataTable(item.Key, true, (styling == true) ? OfficeOpenXml.Table.TableStyles.Light16 : OfficeOpenXml.Table.TableStyles.None);
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+
+                int cells = 7;
+                sheet.Cells[$"G{cells}:L{(cells + index) - 1}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            }
+            MemoryStream stream = new MemoryStream();
+            package.SaveAs(stream);
+            return stream;
+        }
+
         public static MemoryStream CreateExcelWithTitleNonDateFilterMemoReport(List<KeyValuePair<DataTable, string>> dtSourceList, string title, string date,string filter, bool styling = false, int index = 0)
         {
             ExcelPackage package = new ExcelPackage();
@@ -185,6 +216,228 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Helpers
                 sheet.Cells["A3:D3"].Merge = true;
 
                 sheet.Cells["A4"].Value = bankAccount;
+                sheet.Cells["A4:D4"].Merge = true;
+
+                sheet.Cells["A5"].Value = $"Per {date}";
+                sheet.Cells["A5:D5"].Merge = true;
+
+                sheet.Cells["A7"].LoadFromDataTable(item.Key, true, (styling == true) ? OfficeOpenXml.Table.TableStyles.Light16 : OfficeOpenXml.Table.TableStyles.None);
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+
+                int cells = 8;
+                sheet.Cells[$"F{cells}:I{cells + index}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            }
+            MemoryStream stream = new MemoryStream();
+            package.SaveAs(stream);
+            return stream;
+        }
+
+        public static ExcelPackage DailyMutationReportExcelPerSheet(ExcelPackage package, List<KeyValuePair<DataTable, string>> dtSourceList, string title, string bankAccount, string date, bool styling = false, int index = 0)
+        {
+            //ExcelPackage package = new ExcelPackage();
+            foreach (KeyValuePair<DataTable, string> item in dtSourceList)
+            {
+                var sheet = package.Workbook.Worksheets.Add(item.Value);
+
+                sheet.Cells["A2"].Value = "PT. DANLIRIS";
+                sheet.Cells["A2:D2"].Merge = true;
+
+                sheet.Cells["A3"].Value = title;
+                sheet.Cells["A3:D3"].Merge = true;
+
+                sheet.Cells["A4"].Value = bankAccount;
+                sheet.Cells["A4:D4"].Merge = true;
+
+                sheet.Cells["A5"].Value = $"Per {date}";
+                sheet.Cells["A5:D5"].Merge = true;
+
+                sheet.Cells["A7"].LoadFromDataTable(item.Key, true, (styling == true) ? OfficeOpenXml.Table.TableStyles.Light16 : OfficeOpenXml.Table.TableStyles.None);
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+
+                int cells = 8;
+                sheet.Cells[$"F{cells}:I{cells + index}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            }
+            //MemoryStream stream = new MemoryStream();
+            //package.SaveAs(stream);
+            //return stream;
+            return package;
+        }
+
+        public static MemoryStream DailyMutationReportExcel(List<KeyValuePair<DataTable, string>> dtSourceList, string title, string date, bool styling = false, int index = 0)
+        {
+            ExcelPackage package = new ExcelPackage();
+            foreach (KeyValuePair<DataTable, string> item in dtSourceList)
+            {
+                var sheet = package.Workbook.Worksheets.Add(item.Value);
+
+                sheet.Cells["A2"].Value = "PT. DANLIRIS";
+                sheet.Cells["A2:D2"].Merge = true;
+
+                sheet.Cells["A3"].Value = title;
+                sheet.Cells["A3:D3"].Merge = true;
+
+                sheet.Cells["A4"].Value = item.Key;
+                sheet.Cells["A4:D4"].Merge = true;
+
+                sheet.Cells["A5"].Value = $"Per {date}";
+                sheet.Cells["A5:D5"].Merge = true;
+
+                sheet.Cells["A7"].LoadFromDataTable(item.Key, true, (styling == true) ? OfficeOpenXml.Table.TableStyles.Light16 : OfficeOpenXml.Table.TableStyles.None);
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+
+                int cells = 8;
+                sheet.Cells[$"F{cells}:I{cells + index}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            }
+            MemoryStream stream = new MemoryStream();
+            package.SaveAs(stream);
+            return stream;
+        }
+
+        public static ExcelPackage DailyMutationReportExcelValasPerSheet(ExcelPackage package, List<KeyValuePair<DataTable, string>> dtSourceList, string title, string bankAccount, string date, double? rate, bool styling = false, int index = 0)
+        {
+            //ExcelPackage package = new ExcelPackage();
+            foreach (KeyValuePair<DataTable, string> item in dtSourceList)
+            {
+                var headers = new List<string> { "Tanggal", "Keterangan", "Nomor Referensi", "Jenis Referensi", "Currency", "Before", "DEBIT", "Debit2", "KREDIT", "Kredit2", "SALDO AKHIR", "After2" };
+                var subHeaders = new List<string> { "Original Amount", "Equivalent", "Original Amount", "Equivalent", "Original Amount", "Equivalent" };
+
+                //ExcelPackage package = new ExcelPackage();
+                var sheet = package.Workbook.Worksheets.Add(item.Value);
+
+                sheet.Cells["A2"].Value = "PT. DANLIRIS";
+                sheet.Cells["A2:D2"].Merge = true;
+
+                sheet.Cells["A3"].Value = title;
+                sheet.Cells["A3:D3"].Merge = true;
+
+                sheet.Cells["A4"].Value = bankAccount;
+                sheet.Cells["A4:D4"].Merge = true;
+
+                sheet.Cells["A5"].Value = $"Per {date}";
+                sheet.Cells["A5:D5"].Merge = true;
+
+                sheet.Cells["J6"].Value = "Kurs : Rp.";
+                sheet.Cells["J6"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                sheet.Cells["K6"].Value = $" {rate.GetValueOrDefault().ToString("#,##0.#0")}";
+
+                sheet.Cells["G7"].Value = headers[6];
+                sheet.Cells["G7:H7"].Merge = true;
+                sheet.Cells["I7"].Value = headers[8];
+                sheet.Cells["I7:J7"].Merge = true;
+                sheet.Cells["K7"].Value = headers[10];
+                sheet.Cells["K7:L7"].Merge = true;
+
+                foreach (var i in Enumerable.Range(0, 6))
+                {
+                    var col = (char)('A' + i);
+                    sheet.Cells[$"{col}7"].Value = headers[i];
+                    sheet.Cells[$"{col}7:{col}8"].Merge = true;
+                }
+
+                foreach (var i in Enumerable.Range(0, 6))
+                {
+                    var col = (char)('G' + i);
+                    sheet.Cells[$"{col}8"].Value = subHeaders[i];
+                }
+
+                sheet.Cells["A7:L8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                sheet.Cells["A7:L8"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                sheet.Cells["A7:L8"].Style.Font.Bold = true;
+
+                sheet.Cells["A9"].LoadFromDataTable(item.Key, false, OfficeOpenXml.Table.TableStyles.Light16);
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+
+                int cells = 9;
+                sheet.Cells[$"F{cells}:L{cells + index}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+            }
+            return package;
+            //MemoryStream stream = new MemoryStream();
+            //package.SaveAs(stream);
+            //return stream;
+        }
+
+
+        public static MemoryStream DailyMutationReportExcelValas(List<KeyValuePair<DataTable, string>> dtSourceList, string title, string bankAccount, string date, double? rate,bool styling = false, int index = 0)
+        {
+            ExcelPackage package = new ExcelPackage();
+            foreach (KeyValuePair<DataTable, string> item in dtSourceList)
+            {
+                var headers = new List<string> { "Tanggal", "Keterangan", "Nomor Referensi", "Jenis Referensi", "Currency", "Before", "DEBIT", "Debit2", "KREDIT", "Kredit2", "SALDO AKHIR", "After2" };
+                var subHeaders = new List<string> { "Original Amount", "Equivalent", "Original Amount", "Equivalent", "Original Amount", "Equivalent" };
+
+                //ExcelPackage package = new ExcelPackage();
+                var sheet = package.Workbook.Worksheets.Add(item.Value);
+
+                sheet.Cells["A2"].Value = "PT. DANLIRIS";
+                sheet.Cells["A2:D2"].Merge = true;
+
+                sheet.Cells["A3"].Value = title;
+                sheet.Cells["A3:D3"].Merge = true;
+
+                sheet.Cells["A4"].Value = bankAccount;
+                sheet.Cells["A4:D4"].Merge = true;
+
+                sheet.Cells["A5"].Value = $"Per {date}";
+                sheet.Cells["A5:D5"].Merge = true;
+
+                sheet.Cells["J6"].Value = "Kurs : Rp.";
+                sheet.Cells["J6"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                sheet.Cells["K6"].Value = $" {rate.GetValueOrDefault().ToString("#,##0.#0")}";
+
+                sheet.Cells["G7"].Value = headers[6];
+                sheet.Cells["G7:H7"].Merge = true;
+                sheet.Cells["I7"].Value = headers[8];
+                sheet.Cells["I7:J7"].Merge = true;
+                sheet.Cells["K7"].Value = headers[10];
+                sheet.Cells["K7:L7"].Merge = true;
+
+                foreach (var i in Enumerable.Range(0, 6))
+                {
+                    var col = (char)('A' + i);
+                    sheet.Cells[$"{col}7"].Value = headers[i];
+                    sheet.Cells[$"{col}7:{col}8"].Merge = true;
+                }
+
+                foreach (var i in Enumerable.Range(0, 6))
+                {
+                    var col = (char)('G' + i);
+                    sheet.Cells[$"{col}8"].Value = subHeaders[i];
+                }
+
+                sheet.Cells["A7:L8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                sheet.Cells["A7:L8"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                sheet.Cells["A7:L8"].Style.Font.Bold = true;
+
+                sheet.Cells["A9"].LoadFromDataTable(item.Key, false, OfficeOpenXml.Table.TableStyles.Light16);
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+
+                int cells = 9;
+                sheet.Cells[$"F{cells}:L{cells + index}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                //MemoryStream stream = new MemoryStream();
+                //package.SaveAs(stream);
+                //return stream;
+            }
+            MemoryStream stream = new MemoryStream();
+            package.SaveAs(stream);
+            return stream;
+        }
+
+        public static MemoryStream DailyMutationReportExcelValas(List<KeyValuePair<DataTable, string>> dtSourceList, string title, string date, bool styling = false, int index = 0)
+        {
+            ExcelPackage package = new ExcelPackage();
+            foreach (KeyValuePair<DataTable, string> item in dtSourceList)
+            {
+                var sheet = package.Workbook.Worksheets.Add(item.Value);
+
+                sheet.Cells["A2"].Value = "PT. DANLIRIS";
+                sheet.Cells["A2:D2"].Merge = true;
+
+                sheet.Cells["A3"].Value = title;
+                sheet.Cells["A3:D3"].Merge = true;
+
+                sheet.Cells["A4"].Value = item.Key;
                 sheet.Cells["A4:D4"].Merge = true;
 
                 sheet.Cells["A5"].Value = $"Per {date}";
@@ -262,6 +515,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Helpers
             {
                 sheet.Cells["A4"].LoadFromDataTable(item.Key, true, (styling == true) ? OfficeOpenXml.Table.TableStyles.Light16 : OfficeOpenXml.Table.TableStyles.None);
                 sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+                var count = item.Key.Rows.Count;
+
+                sheet.Cells[$"I5:J{4 + count}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
             }
             MemoryStream stream = new MemoryStream();
             package.SaveAs(stream);

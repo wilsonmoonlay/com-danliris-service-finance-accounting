@@ -23,5 +23,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentDebtB
         List<GarmentDebtBalanceCardDto> GetDebtBalanceCardWithBeforeBalanceAndSaldoAkhirDto(int supplierId, int month, int year);
         GarmentDebtBalanceIndexDto GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex(int supplierId, int month, int year);
         GarmentDebtBalanceIndexDto GetDebtBalanceCardWithBalanceBeforeAndRemainBalanceIndex(string searchingType, int page = 1, int size = 25, string order = "{}", List<string> select = null, string keyword = null, string filter = "{}");
+        int UpdateFromMemo(int deliveryOrderId, int memoDetailId, string memoNo, double memoAmount, double paymentRate);
     }
 }

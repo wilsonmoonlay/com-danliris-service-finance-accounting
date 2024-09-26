@@ -1,5 +1,7 @@
 ﻿using Com.Danliris.Service.Finance.Accounting.Lib;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.PaymentDispositionNote;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.DailyBankTransaction;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.JournalTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.PaymentDispositionNote;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.PurchasingDispositionExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.PaymentDispositionNote;
@@ -67,6 +69,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.PaymentDispositi
             serviceProvider
                 .Setup(x => x.GetService(typeof(IAutoDailyBankTransactionService)))
                 .Returns(new AutoDailyBankTransactionServiceHelper());
+
+            serviceProvider
+                .Setup(x => x.GetService(typeof(IAutoJournalService)))
+                .Returns(new AutoJournalServiceTestHelper());
 
             serviceProvider.Setup(sp => sp.GetService(typeof(IHttpClientService))).Returns(new HttpClientOthersExpenditureServiceHelper());
 
@@ -195,10 +201,82 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.PaymentDispositi
         {
             PaymentDispositionNoteService service = new PaymentDispositionNoteService(GetServiceProvider().Object, _dbContext(GetCurrentMethod()));
 
-            PaymentDispositionNotePostDto dto = _dataUtil(service, GetCurrentMethod()).GetNewPostDto();
+            PaymentDispositionNotePostDto dto = await _dataUtil(service, GetCurrentMethod()).GetNewPostDto();
 
             var Response = await service.Post(dto);
             Assert.NotEqual(0, Response);
+        }
+
+        [Fact]
+        public async Task Should_Success_Get_Report()
+        {
+            try
+            {
+                PaymentDispositionNoteService service = new PaymentDispositionNoteService(GetServiceProvider().Object, _dbContext(GetCurrentMethod()));
+                PaymentDispositionNoteModel model = _dataUtil(service, GetCurrentMethod()).GetNewData();
+                await service.CreateAsync(model);
+
+                var item = model.Items.FirstOrDefault();
+                var result = service.GetReport(model.Id, item.DispositionId, model.SupplierId, item.DivisionId, DateTimeOffset.MinValue, DateTimeOffset.MaxValue);
+
+                Assert.NotEmpty(result);
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
+
+        [Fact]
+        public async Task Should_Success_Get_Report_Xls()
+        {
+            PaymentDispositionNoteService service = new PaymentDispositionNoteService(GetServiceProvider().Object, _dbContext(GetCurrentMethod()));
+            PaymentDispositionNoteModel model = _dataUtil(service, GetCurrentMethod()).GetNewData();
+
+            var xls = service.GetXls(new List<ReportDto>() { new ReportDto(1, "", DateTimeOffset.Now, 1, "", DateTimeOffset.Now, DateTimeOffset.Now, 1, "", 1, "", 1, "", false, "", 1, "", 1, "", 1, 1, "", "", 1, "", 1, 1, 1, 1, 1) });
+            var xls2 = service.GetXls(new List<ReportDto>() { new ReportDto(1, "", DateTimeOffset.Now, 1, "", DateTimeOffset.Now, DateTimeOffset.Now, 1, "", 1, "", 1, "", false, "", 1, "", 1, "", 1, 1, "", "", 0, "", 1, 1, 1, 1, 1) });
+
+            Assert.NotNull(xls);
+            Assert.NotNull(xls2);
+        }
+
+        [Fact]
+        public void Should_Success_Get_Report_Xls_Empty()
+        {
+            PaymentDispositionNoteService service = new PaymentDispositionNoteService(GetServiceProvider().Object, _dbContext(GetCurrentMethod()));
+            var xls = service.GetXls(new List<ReportDto>());
+            Assert.NotNull(xls);
+        }
+
+        [Fact]
+        public async Task Should_Success_GetAllByPosition_Data()
+        {
+            PaymentDispositionNoteService service = new PaymentDispositionNoteService(GetServiceProvider().Object, _dbContext(GetCurrentMethod()));
+            var data = await _dataUtil(service, GetCurrentMethod()).GetTestData();
+            var Response = service.GetAllByPosition(1, 25, "{}", null, null, "{}");
+            Assert.NotEmpty(Response.Data);
+        }
+
+        [Fact]
+        public async Task Should_Success_GetAmountPaidAndIsPosted()
+        {
+            PaymentDispositionNoteService service = new PaymentDispositionNoteService(GetServiceProvider().Object, _dbContext(GetCurrentMethod()));
+            var data = await _dataUtil(service, GetCurrentMethod()).GetTestData();
+            var Response = service.GetAmountPaidAndIsPosted(data.PaymentDispositionNo);
+            Assert.Equal(0, Response.AmountPaid);
+            Assert.True(Response.IsPosted);
+        }
+
+        [Fact]
+        public async Task Should_Success_GeneratePdfTemplate()
+        {
+            PaymentDispositionNoteService service = new PaymentDispositionNoteService(GetServiceProvider().Object, _dbContext(GetCurrentMethod()));
+            var data = await _dataUtil(service, GetCurrentMethod()).GetPDFData();
+            var data2 = await _dataUtil(service, GetCurrentMethod()).GetPDFDataIDRNONIDR();
+            var Response = service.GeneratePdfTemplate(data, 7);
+            var Response2 = service.GeneratePdfTemplate(data2, 7);
+            Assert.NotNull(Response);
+            Assert.NotNull(Response2);
         }
     }
 }

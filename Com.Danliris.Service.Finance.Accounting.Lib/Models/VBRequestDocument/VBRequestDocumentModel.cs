@@ -1,4 +1,5 @@
 ﻿using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDocument;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.NewIntegrationViewModel;
 using Com.Moonlay.Models;
 using System;
 using System.Collections.Generic;
@@ -131,6 +132,20 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument
         public string NoBL { get; private set; }
         public string NoPO { get; private set; }
         public string TypePurchasing { get; private set; }
+        public int BankId { get; private set; }
+        public string BankCode { get; private set; }
+        public string BankBankCode { get; private set; }
+        public string BankAccountName { get; private set; }
+        public string BankAccountNumber { get; private set; }
+        public string BankBankName { get; private set; }
+        public string BankAccountCOA { get; private set; }
+        public long BankCurrencyId { get; private set; }
+        public string BankCurrencyCode { get; private set; }
+        public string BankCurrencySymbol { get; private set; }
+        public double BankCurrencyRate { get; private set; }
+        public string BankCurrencyDescription { get; private set; }
+        public string BankDocumentNo { get; private set; }
+
 
         public void SetDate(DateTimeOffset newDate, string user, string userAgent)
         {
@@ -297,6 +312,33 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument
         {
             NoBL = noBl;
             NoPO = noPo;
+        }
+
+        public void SetBank(AccountBankViewModel bankViewModel, string username, string userAgent)
+        {
+            if (bankViewModel != null)
+            {
+                BankId = bankViewModel.Id;
+                BankCode = bankViewModel.Code;
+                BankBankCode = bankViewModel.BankCode;
+                BankAccountName = bankViewModel.AccountName;
+                BankAccountNumber = bankViewModel.AccountNumber;
+                BankBankName = bankViewModel.BankName;
+                BankAccountCOA = bankViewModel.AccountCOA;
+                if (bankViewModel.Currency != null)
+                {
+                    BankCurrencyId = bankViewModel.Currency.Id;
+                    BankCurrencyCode = bankViewModel.Currency.Code;
+                    BankCurrencySymbol = bankViewModel.Currency.Symbol;
+                    BankCurrencyRate = bankViewModel.Currency.Rate;
+                    BankCurrencyDescription = bankViewModel.Currency.Description;
+                }
+            }
+        }
+        public void SetBankDocumentNo(string bankDocumentNo, string username, string userAgent)
+        {
+            BankDocumentNo = bankDocumentNo;
+            this.FlagForUpdate(username, userAgent);
         }
     }
 }

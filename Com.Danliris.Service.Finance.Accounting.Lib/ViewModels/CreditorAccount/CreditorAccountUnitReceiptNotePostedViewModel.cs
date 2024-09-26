@@ -27,6 +27,9 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.CreditorAccount
         public string UnitCode { get; set; }
 
         public string UnitName { get; set; }
-
+        public string ExternalPurchaseOrderNo { get; set; }
+        public decimal VATAmount { get; set; }
+        public decimal IncomeTaxAmount { get; set; }
+        public string IncomeTaxNo { get; set; }
     }
 }

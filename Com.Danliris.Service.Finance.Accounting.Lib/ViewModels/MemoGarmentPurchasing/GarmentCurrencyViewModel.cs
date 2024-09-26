@@ -6,8 +6,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.MemoGarmentPurc
 {
     public class GarmentCurrencyViewModel
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public string Code { get; set; }
-        public int Rate { get; set; }
+        public double Rate { get; set; }
     }
 }

@@ -1,7 +1,8 @@
 ﻿using Com.Danliris.Service.Finance.Accounting.Lib;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.DPPVATBankExpenditureNote;
+using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.DailyBankTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Services.JournalTransaction;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDocument;
-using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.HttpClientService;
 using Com.Danliris.Service.Finance.Accounting.Lib.Services.IdentityService;
 using Com.Danliris.Service.Finance.Accounting.Test.DataUtils.VBRequestDocument;
@@ -17,13 +18,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Com.Danliris.Service.Finance.Accounting.Test.Services.VBRequestDocument
 {
-  public  class VBRequestDocumentServiceTest
+    public  class VBRequestDocumentServiceTest
     {
         private const string ENTITY = "VBRequestDocuments";
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -70,6 +70,22 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.VBRequestDocumen
             serviceProvider
                 .Setup(x => x.GetService(typeof(IAutoJournalService)))
                 .Returns(new AutoJournalServiceTestHelper());
+
+            var mockAutoDailyBankTransaction = new Mock<IAutoDailyBankTransactionService>();
+            mockAutoDailyBankTransaction
+                .Setup(x => x.AutoCreateVbApproval(It.IsAny<List<ApprovalVBAutoJournalDto>>()))
+                .ReturnsAsync(1);
+            serviceProvider
+                .Setup(x => x.GetService(typeof(IAutoDailyBankTransactionService)))
+                .Returns(mockAutoDailyBankTransaction.Object);
+
+            serviceProvider
+                .Setup(x => x.GetService(typeof(IAutoDailyBankTransactionService)))
+                .Returns(new AutoDailyBankTransactionServiceTestHelper());
+
+            serviceProvider
+                .Setup(x => x.GetService(typeof(IDPPVATBankExpenditureNoteService)))
+                .Returns(new DPPVATBankExpenditureNoteServiceTest());
 
             serviceProvider
                 .Setup(x => x.GetService(typeof(IHttpClientService)))
@@ -190,6 +206,29 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.VBRequestDocumen
 
             //Assert
             Assert.NotNull( result);
+            Assert.True(0 < result.Data.Count());
+        }
+
+        [Fact]
+        public void GetByUser_Return_Success()
+        {
+            //Setup
+            FinanceDbContext dbContext = _dbContext(GetCurrentAsyncMethod());
+
+            VBRequestDocumentService service = new VBRequestDocumentService(dbContext, GetServiceProvider().Object);
+            VBRequestDocumentWithPODto data = GetdataUtil(service).GetTestData_VBRequestDocumentWithPO();
+
+            var orderData = new
+            {
+                DocumentNo = "desc"
+            };
+            string order = JsonConvert.SerializeObject(orderData);
+
+            //Act
+            var result = service.GetByUser(1, 1, order, new List<string>(), "", "{}");
+
+            //Assert
+            Assert.NotNull(result);
             Assert.True(0 < result.Data.Count());
         }
 
@@ -359,7 +398,24 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.VBRequestDocumen
             ApprovalVBFormDto approvalVBFormDto = new ApprovalVBFormDto()
             {
                 IsApproved=true,
-                Ids = new List<int>() { data.Id }
+                Ids = new List<int>() { data.Id },
+                Bank = new Lib.ViewModels.NewIntegrationViewModel.AccountBankViewModel { 
+                    Id = 1, 
+                    Code="BankTest",
+                    AccountCOA="BankCoaTest",
+                    AccountName="BankAccountNameTest",
+                    AccountNumber= "BankAccountNumberTest",
+                    BankCode = "BankBankCodeTest",
+                    BankName = "BankBankNameTestst",
+                    Currency = new Lib.ViewModels.NewIntegrationViewModel.CurrencyViewModel
+                    {
+                        Code = "CurrencyCodeTest",
+                        Id = 1,
+                        Description="CurrencyDescriptionTEst",
+                        Rate =1,
+                        Symbol = "Sy"
+                    }
+                }
             };
             //Act
             int result = await service.ApprovalData(approvalVBFormDto);
@@ -386,6 +442,24 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Services.VBRequestDocumen
 
             //Assert
             Assert.True(0 < result);
+        }
+
+        [Fact]
+        public void GetVBForPurchasing_Return_Succes()
+        {
+            //Setup
+            var dbContext = _dbContext(GetCurrentAsyncMethod());
+
+            var service = new VBRequestDocumentService(dbContext, GetServiceProvider().Object);
+            var data = GetdataUtil(service).GetTestData_VBRequestDocumentWithPO_Cancellation();
+
+            //Act
+            bool result1 = service.GetVBForPurchasing(0);
+            bool result2 = service.GetVBForPurchasing(data.Id);
+
+            //Assert
+            Assert.True(result1);
+            Assert.False(result2);
         }
     }
 }

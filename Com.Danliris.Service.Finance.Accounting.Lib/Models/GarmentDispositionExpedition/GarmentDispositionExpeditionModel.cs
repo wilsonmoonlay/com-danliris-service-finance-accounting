@@ -39,6 +39,61 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentDispositionE
             Category = category;
         }
 
+        public GarmentDispositionExpeditionModel(int id, string dispositionNoteNo,
+            DateTimeOffset dispositionNoteDate,
+            DateTimeOffset dispositionNoteDueDate,
+            int dispositionNoteId,
+            double currencyTotalPaid,
+            double totalPaid,
+            int currencyId,
+            string currencyCode,
+            string suppliername,
+            string remark,
+            string proformaNo,
+            string createdBy,
+            double currencyRate,
+            int supplierId,
+            string supplierCode,
+            double vatAmount,
+            double currencyVatAmount,
+            double incomeTaxAmount,
+            double currencyIncomeTaxAmount,
+            double dppAmount,
+            double currencyDppAmount,
+            DateTimeOffset verifiedDateSend,
+            DateTimeOffset verifiedDateReceived,
+            string sendToPurchasingRemark,
+            DateTime createdDate)
+        {
+            Id = id;
+            DispositionNoteNo = dispositionNoteNo;
+            DispositionNoteDate = dispositionNoteDate;
+            DispositionNoteDueDate = dispositionNoteDueDate;
+            DispositionNoteId = dispositionNoteId;
+            CurrencyTotalPaid = currencyTotalPaid;
+            TotalPaid = totalPaid;
+            CurrencyId = currencyId;
+            CurrencyCode = currencyCode;
+            SupplierName = suppliername;
+            Remark = remark;
+            SendToVerificationBy = createdBy;
+            CreatedBy = createdBy;
+            ProformaNo = proformaNo;
+            CurrencyRate = currencyRate;
+            SupplierId = supplierId;
+            SupplierCode = supplierCode;
+            VATAmount = vatAmount;
+            CurrencyVATAmount = currencyVatAmount;
+            IncomeTaxAmount = incomeTaxAmount;
+            CurrencyIncomeTaxAmount = currencyIncomeTaxAmount;
+            DPPAmount = dppAmount;
+            CurrencyDPPAmount = currencyDppAmount;
+            VerifiedDateSend = verifiedDateSend;
+            VerifiedDateReceived = verifiedDateReceived;
+            SendToPurchasingRemark = sendToPurchasingRemark;
+            CreatedUtc = createdDate;
+        }
+
         public int DispositionNoteId { get; private set; }
         [MaxLength(64)]
         public string DispositionNoteNo { get; private set; }

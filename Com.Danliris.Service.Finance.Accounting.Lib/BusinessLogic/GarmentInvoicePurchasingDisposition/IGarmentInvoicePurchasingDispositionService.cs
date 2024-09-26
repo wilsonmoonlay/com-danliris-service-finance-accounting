@@ -1,8 +1,10 @@
 ﻿using Com.Danliris.Service.Finance.Accounting.Lib.Models.GarmentInvoicePurchasingDisposition;
 using Com.Danliris.Service.Finance.Accounting.Lib.Utilities;
 using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentInvoicePurchasingDisposition;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.GarmentInvoicePurchasingDisposition.Report;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,5 +19,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.GarmentInvoi
         Task<int> UpdateAsync(int id, GarmentInvoicePurchasingDispositionModel model);
         Task<int> Post(GarmentInvoicePurchasingDispositionPostingViewModel form);
         ReadResponse<GarmentInvoicePurchasingDispositionItemModel> ReadDetailsByEPOId(string epoId);
-    }
+		Task<List<MonitoringDispositionPayment>> GetMonitoring(string invoiceNo,  string dispositionNo,DateTimeOffset startDate, DateTimeOffset endDate, int offset);
+		ReadResponse<GarmentInvoicePurchasingDispositionNoVM> GetLoader(string keyword = null, string filter = "{}");
+		Task<MemoryStream> DownloadReportXls(string invoiceNo, string dispositionNo, DateTimeOffset startDate, DateTimeOffset endDate);
+		
+
+	}
 }

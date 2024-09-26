@@ -1,7 +1,10 @@
 ﻿using Com.Danliris.Service.Finance.Accounting.Lib;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRealizationDocumentExpedition;
 using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDocument;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocument;
 using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocumentExpedition;
+using Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRequestDocument;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.VBRealizationDocumentNonPO;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -98,7 +101,71 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.DataUtils.VBRealizationDo
 
         }
 
+        public VBRequestDocumentModel GetTestData_VBRequestDocument()
+        {
+            var data = new VBRequestDocumentModel("documentNo", DateTimeOffset.Now, DateTimeOffset.Now, 1, "suppliantUnitCode", "suppliantUnitName", 1, "suppliantDivisionCode", "suppliantDivisionName", 1, "currencyCode", "currencySymbol", "currencyDescription", 1, "purpose", 1, true, true, VBType.NonPO, true, "noBI", "noPo", "typePurchasing");
+            dbContext.VBRequestDocuments.Add(data);
+            dbContext.SaveChanges();
+            return data;
+        }
 
+        public VBRealizationDocumentModel GetTestData_VBRealizationDocument()
+        {
+            var data = GetTestData_VBRealizationDocumentNonPO();
+            var result = new VBRealizationDocumentModel(data);
+            dbContext.VBRealizationDocuments.Add(result);
+            dbContext.SaveChanges();
+            return result;
+        }
 
+        public VBRealizationDocumentNonPOViewModel GetTestData_VBRealizationDocumentNonPO()
+        {
+            var data = new VBRealizationDocumentNonPOViewModel
+            {
+                Active = true,
+                Amount = 1,
+                BLAWBNumber = "",
+                CreatedAgent = "",
+                LastModifiedAgent = "",
+                ContractPONumber = "",
+                CreatedBy = "",
+                CreatedUtc = DateTime.Now,
+                Currency = new CurrencyViewModel
+                {
+                    Code = "",
+                    Description = "",
+                    Id = 1,
+                    Rate = 1,
+                    Symbol = ""
+                },
+                Date = DateTime.Now,
+                DocumentNo = "",
+                DocumentType = RealizationDocumentType.NonVB,
+                Id = 1,
+                Index = 1,
+                IsDeleted = false,
+                IsInklaring = false,
+                LastModifiedBy = "",
+                LastModifiedUtc = DateTime.Now,
+                Position = VBRealizationPosition.Purchasing,
+                Remark = "",
+                Type = VBType.NonPO,
+                Unit = new UnitViewModel
+                {
+                    Code = "",
+                    Division = new DivisionViewModel
+                    {
+                        Code = "",
+                        Id = 1,
+                        Name = ""
+                    },
+                    Id = 1,
+                    Name = "",
+                    VBDocumentLayoutOrder = 1
+                },
+                VBNonPOType = ""
+            };
+            return data;
+        }
     }
 }

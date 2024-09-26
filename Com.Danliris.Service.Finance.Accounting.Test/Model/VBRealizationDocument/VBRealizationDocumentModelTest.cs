@@ -12,7 +12,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Test.Model.VBRealizationDocume
         public void should_success_instantiate()
         {
             VBRealizationDocumentModel model = new VBRealizationDocumentModel();
-            model.SetIsCompleted(DateTimeOffset.Now.AddDays(1), "user", "userAgent");
+            model.SetIsCompleted(DateTimeOffset.Now.AddDays(1), "user", "userAgent", null);
             model.SetCurrency(1, "IDR", "Rp", 1, "description", "user", "userAgent");
             model.SetUnit(1, "newUnitCode", "newUnitName", "user", "userAgent");
             model.SetDivision(1, "newDivisionCode", "newDivisionName", "user", "userAgent");

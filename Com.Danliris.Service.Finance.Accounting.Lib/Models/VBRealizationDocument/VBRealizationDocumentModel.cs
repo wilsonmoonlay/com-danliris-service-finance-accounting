@@ -66,6 +66,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
             DocumentType = viewModel.DocumentType;
             Position = VBRealizationPosition.Purchasing;
             Remark = viewModel.Remark;
+            InvoiceNo = viewModel.InvoiceNo;
         }
 
         public void UpdateVerified(VBRealizationPosition position, string reason, string username, string userAgent)
@@ -78,7 +79,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
             this.FlagForUpdate(username, userAgent);
         }
 
-        public VBRealizationDocumentModel(CurrencyDto currency, DateTimeOffset? date, UnitDto suppliantUnit, Tuple<string, int> documentNo, decimal amount, string remark)
+        public VBRealizationDocumentModel(CurrencyDto currency, DateTimeOffset? date, UnitDto suppliantUnit, Tuple<string, int> documentNo, decimal amount, string invoiceNo, string remark)
         {
             CurrencyCode = currency.Code;
             CurrencyDescription = currency.Description;
@@ -98,10 +99,11 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
             Index = documentNo.Item2;
             Position = VBRealizationPosition.Purchasing;
             Amount = amount;
+            InvoiceNo = invoiceNo;
             Remark = remark;
         }
 
-        public VBRealizationDocumentModel(DateTimeOffset? date, VBRequestDocumentModel vbRequest, Tuple<string, int> documentNo, decimal amount, string remark)
+        public VBRealizationDocumentModel(DateTimeOffset? date, VBRequestDocumentModel vbRequest, Tuple<string, int> documentNo, decimal amount, string invoiceNo, string remark)
         {
             Date = date.GetValueOrDefault();
             Type = VBType.WithPO;
@@ -132,11 +134,13 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
 
             Position = VBRealizationPosition.Purchasing;
             Remark = remark;
+            InvoiceNo = invoiceNo;
         }
 
         
 
         public VBRealizationPosition Position { get; private set; }
+        public string InvoiceNo { get; private set; }
         public string Remark { get; private set; }
         public VBType Type { get; private set; }
         public RealizationDocumentType DocumentType { get; private set; }
@@ -147,11 +151,12 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
         [MaxLength(32)]
         public string VBNonPoType { get; private set; }
 
-        public void SetIsCompleted(DateTimeOffset? completedDate, string username, string userAgent)
+        public void SetIsCompleted(DateTimeOffset? completedDate, string username, string userAgent, string referenceNo)
         {
             IsCompleted = true;
             CompletedDate = completedDate;
             CompletedBy = username;
+            ReferenceNo = referenceNo;
             this.FlagForUpdate(username, userAgent);
         }
 
@@ -192,7 +197,10 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.VBRealizationDocume
         public string VerifiedBy { get; private set; }
         public bool IsCompleted { get; private set; }
         public DateTimeOffset? CompletedDate { get; private set; }
+        [MaxLength(512)]
         public string CompletedBy { get; private set; }
+        [MaxLength(128)]
+        public string ReferenceNo { get; private set; }
         [MaxLength(256)]
         public string BLAWBNumber { get; private set; }
         [MaxLength(256)]

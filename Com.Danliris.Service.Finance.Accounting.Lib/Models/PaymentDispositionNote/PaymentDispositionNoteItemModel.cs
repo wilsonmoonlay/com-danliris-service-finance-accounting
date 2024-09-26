@@ -35,6 +35,8 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.Models.PaymentDispositionN
         [MaxLength(1000)]
         public string CategoryName { get; set; }
         public double PayToSupplier { get; set; }
+        public double AmountPaid { get; set; }
+        public double SupplierPayment { get; set; }
         public virtual ICollection<PaymentDispositionNoteDetailModel> Details { get; set; }
 
     }

@@ -7,6 +7,13 @@ using System.Text;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib.Enums.Expedition
 {
+    public enum SupplierType
+    {
+        All = 1,
+        Local,
+        Import
+    }
+
     public enum ExpeditionPosition
     {
         [Description("Bag. Pembelian")]

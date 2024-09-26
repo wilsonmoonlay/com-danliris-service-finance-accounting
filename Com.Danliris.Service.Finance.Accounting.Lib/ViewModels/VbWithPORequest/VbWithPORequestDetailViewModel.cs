@@ -1,4 +1,5 @@
-﻿using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.IntegrationViewModel;
+﻿using Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.VBRequestDocument;
+using Com.Danliris.Service.Finance.Accounting.Lib.ViewModels.IntegrationViewModel;
 using System.Collections.Generic;
 
 namespace Com.Danliris.Service.Finance.Accounting.Lib
@@ -12,6 +13,7 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib
         public decimal CurrencyRate { get; set; }
         public IncomeTax IncomeTax { get; set; }
         public string IncomeTaxBy { get; set; }
+        public VatTaxDto vattax { get; set; }
         public ICollection<VbWithPORequestDetailItemsViewModel> Details { get; set; }
     }
 }

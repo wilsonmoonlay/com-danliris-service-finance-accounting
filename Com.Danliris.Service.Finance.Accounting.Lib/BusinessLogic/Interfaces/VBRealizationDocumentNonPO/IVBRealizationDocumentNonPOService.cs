@@ -17,5 +17,6 @@ namespace Com.Danliris.Service.Finance.Accounting.Lib.BusinessLogic.Interfaces.V
         Task<VBRealizationDocumentNonPOViewModel> ReadByIdAsync(int id);
         Task<int> UpdateAsync(int id, VBRealizationDocumentNonPOViewModel model);
         Task<int> DeleteAsync(int id);
+        double CheckInvoiceNo(int id, string invoiceNo);
     }
 }
